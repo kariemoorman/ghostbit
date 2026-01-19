@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 jobs:
-  version-bump:
+  create-tag:
     runs-on: ubuntu-latest
     if: (github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'version-bump')) || github.event_name == 'workflow_dispatch'
     steps:

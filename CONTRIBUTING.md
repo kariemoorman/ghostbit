@@ -128,7 +128,7 @@ Example test:
 ```python
 def test_encode_with_password():
     """Test encoding with password protection."""
-    coder = MultiFormatCoder()
+    coder = AudioMultiFormatCoder()
     coder.encode_files_multi_format(
         carrier_file='test.wav',
         secret_files=['secret.txt'],

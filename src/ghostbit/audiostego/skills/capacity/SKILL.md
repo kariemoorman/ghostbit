@@ -1,6 +1,6 @@
 # Capacity Planning
 
-Guide for calculating and managing carrier capacity in AudioStego.
+Guide for calculating and managing carrier capacity in GH0STB1T: AUD10STEG0.
 
 ## Overview
 

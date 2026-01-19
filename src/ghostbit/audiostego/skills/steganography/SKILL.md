@@ -9,7 +9,7 @@ GH0STB1T: AUD10STEG0 allows you to hide secret files inside audio carriers using
 ## Installation
 
 ```bash
-pip install ghostbit
+pip install git+https://github.com/kariemoorman/ghostbit.git@latest
 ```
 
 ## Basic Usage
@@ -17,7 +17,7 @@ pip install ghostbit
 ### Encoding Files
 
 ```python
-from ghostbit.audiostego.core.audio_multiformat_coder import AudioMultiFormatCoder, EncodeMode
+from ghostbit.audiostego import AudioMultiFormatCoder, EncodeMode
 
 # Create coder instance
 coder = AudioMultiFormatCoder()
@@ -189,7 +189,7 @@ coder.encode_files_multi_format(
 def on_progress():
     print("Processing block...")
 
-coder = MultiFormatCoder()
+coder = AudioMultiFormatCoder()
 coder.on_encoded_element = on_progress
 
 coder.encode_files_multi_format(

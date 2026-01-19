@@ -9,7 +9,7 @@
     <img src="https://img.shields.io/badge/License-Apache%202.0-red.svg" alt="License">
   </a>
   <a href="https://github.com/kariemoorman/ghostbit/releases">
-    <img src="https://img.shields.io/github/v/release/kariemoorman/ghostbit" alt="Release">
+    <img src="https://img.shields.io/github/v/release/kariemoorman/ghostbit?cacheSeconds=300" alt="Release">
   </a>
   <a href="https://www.python.org/downloads/">
     <img src="https://img.shields.io/badge/python-3.13+-green.svg" alt="Language">

@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-Common issues and solutions when using AudioStego.
+Common issues and solutions when using GH0STB1T: AUD10STEG0.
 
 ## Installation Issues
 

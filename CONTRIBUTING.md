@@ -1,4 +1,4 @@
-# Contributing to AudioStego
+# Contributing to GH0STB1T
 
 Thank you for your interest in contributing to GH0STB1T.
 

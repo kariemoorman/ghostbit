@@ -1,0 +1,112 @@
+name: "Tag"
+description: "Create tag"
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    if: (github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'version-bump')) || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout repository
+        id: checkout_repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && 'main' || github.ref }}
+
+      - name: Fetch tags
+        id: fetch_tags
+        run: git fetch --tags --force
+
+      - name: Set up Python
+        id: setup_python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Commitizen
+        id: install_dep
+        run: |
+          python -m pip install --upgrade pip
+          pip install commitizen
+
+      - name: Get current version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(grep -oP '__version__\s*=\s*"\K[^"]+' src/ghostbit/__init__.py)
+          TAG="v$VERSION"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Current version: $VERSION"
+
+      - name: Validate tag format
+        id: validate_tag
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid tag format: $TAG"
+            exit 1
+          fi
+
+      - name: Check if current version tag exists
+        id: tag
+        shell: bash
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+
+          if git show-ref --tags --verify --quiet "refs/tags/$TAG"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag $TAG already exists"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Tag $TAG does not exist"
+          fi
+
+      - name: Stop if no tag needed
+        id: no_change
+        if: steps.tag.outputs.exists == 'true'
+        run: |
+          echo "No tag needed. Exiting."
+          exit 0
+
+      - name: Configure git
+        id: configure_git
+        if:  steps.tag.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+
+      - name: Create and push tag
+        id: create_tag
+        if:  steps.tag.outputs.exists == 'false'
+        run: |
+          echo "Creating tag: ${{ steps.version.outputs.tag }}"
+
+          TAG="${{ steps.version.outputs.tag }}"
+
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+
+      - name: Summary
+        id: summary
+        run: |
+          echo "## Tag Creation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.tag.outputs.exists }}" == "true" ]]; then
+            echo "- **Status**: Tag already existed, skipped creation" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Status**: Tag created and pushed to main" >> $GITHUB_STEP_SUMMARY
+          fi

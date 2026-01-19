@@ -1,0 +1,14 @@
+services:
+  ghostbit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghostbit:latest
+    container_name: ghostbit-app
+    volumes:
+      - ./input:/data/input:ro
+      - ./output:/data/output:rw
+    stdin_open: true
+    tty: true
+    environment:
+      - HOME=/home/appuser

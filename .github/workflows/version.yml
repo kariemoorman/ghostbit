@@ -1,0 +1,111 @@
+name: "Version"
+description: "Version bump workflow"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout repository
+        id: checkout_repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        id: setup_python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Commitizen
+        id: install_dep
+        run: |
+          python -m pip install --upgrade pip
+          pip install commitizen
+
+      - name: Get current version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(grep -oP '__version__\s*=\s*"\K[^"]+' src/ghostbit/__init__.py)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Current version: $VERSION"
+
+      - name: Detect whether a version bump is needed
+        id: detect
+        shell: bash
+        run: |
+          CURRENT="${{ steps.version.outputs.version }}"
+
+          set +e
+          BUMP_OUTPUT=$(cz bump --dry-run --yes 2>&1)
+          BUMP_EXIT=$?
+          set -e
+          
+          echo "Commitizen output:"
+          echo "$BUMP_OUTPUT"
+          echo "Exit code: $BUMP_EXIT"
+
+          NEXT=$(echo "$BUMP_OUTPUT" | grep "bump version" | awk '{print $NF}')
+          
+          if [[ -n "$NEXT" && "$NEXT" != "$CURRENT" ]]; then
+            echo "bump=true" >> "$GITHUB_OUTPUT"
+            echo "next_version=$NEXT" >> "$GITHUB_OUTPUT"
+            echo "Next version would be: $NEXT"
+          else
+            echo "bump=false" >> "$GITHUB_OUTPUT"
+            echo "No version bump required"
+          fi
+
+      - name: Stop if no version bump or tag needed
+        id: no_change
+        if: steps.detect.outputs.bump == 'false'
+        run: |
+          echo "No version bump needed. Exiting."
+          exit 0
+
+      - name: Configure git
+        id: configure_git
+        if: steps.detect.outputs.bump == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create release branch and bump version
+        id: bump
+        if: steps.detect.outputs.bump == 'true'
+        shell: bash
+        run: |
+          BRANCH="version-update-${{ steps.detect.outputs.next_version }}-$(date +%s)"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+
+          git checkout -b "$BRANCH"
+          cz bump --yes
+
+      - name: Push branch
+        if: steps.detect.outputs.bump == 'true'
+        id: push_branch
+        run: |
+          git push --set-upstream origin "${{ steps.bump.outputs.branch }}"
+
+
+      - name: Open Pull Request
+        if: steps.detect.outputs.bump == 'true'
+        id: open_pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base main \
+            --head "${{ steps.bump.outputs.branch }}" \
+            --title "chore(release): version bump" \
+            --body "Automated version bump and tag via Commitizen" \
+            --label "version-bump,automated"

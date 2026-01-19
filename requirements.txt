@@ -1,0 +1,12 @@
+# ==========================================#
+# Audio Steganography - Python Requirements #
+# ==========================================#
+
+pycryptodome>=3.15.0
+pydub>=0.25.1
+audioop-lts>=0.2.2
+soundfile>=0.12.1
+argon2-cffi>=25.1.0
+cryptography>=46.0.3
+
+# You must also install ffmpeg separately: https://ffmpeg.org/

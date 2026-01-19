@@ -1,0 +1,217 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ghostbit"
+dynamic = ["version"]
+description = "Multi-format steganography toolkit"
+keywords = ["steganography", "cryptography", "encryption", "file-hiding", "security", "audio", "image", "video"]
+readme = "README.md"
+authors = [
+    { name = "Karie Moorman"}
+]
+maintainers = [
+    {name = "Karie Moorman"}
+]
+classifiers = [
+    # Development Status
+    "Development Status :: 3 - Alpha",
+    # "Development Status :: 4 - Beta",
+    # "Development Status :: 5 - Production/Stable",
+    
+    # Intended Audience
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Information Technology",
+    
+    # Topic
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Multimedia :: Sound/Audio :: Conversion",
+    "Topic :: Multimedia :: Sound/Audio :: Analysis",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Multimedia :: Video :: Conversion",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    
+    # Python Versions
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    
+    # Operating Systems
+    "Operating System :: OS Independent",
+    
+    # Other
+    "Typing :: Typed",
+    "Natural Language :: English",
+]
+requires-python = ">=3.13"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+
+dependencies = [
+    "pycryptodome>=3.15.0",
+    "pydub>=0.25.1",
+    "audioop-lts>=0.2.2",
+    "soundfile>=0.12.1",
+    "argon2-cffi>=25.1.0",
+    "cryptography>=46.0.3"
+]
+
+[project.urls]
+Homepage = "https://github.com/kariemoorman/ghostbit"
+Repository = "https://github.com/kariemoorman/ghostbit"
+"Bug Tracker" = "https://github.com/kariemoorman/ghostbit/issues"
+Changelog = "https://github.com/kariemoorman/ghostbit/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+audio = [
+    "pycryptodome>=3.15.0",
+    "pydub>=0.25.1",
+    "audioop-lts>=0.2.2",
+    "soundfile>=0.12.1",
+    "argon2-cffi>=25.1.0",
+    "cryptography>=46.0.3"
+]
+
+# image = [
+#     "Pillow>=10.0.0",
+#     "opencv-python>=4.8.0",
+#     "scipy>=1.11.0",
+#     "jpegio>=0.2.8",
+#     "PyWavelets>=1.4.0",
+#     "argon2-cffi>=25.1.0",
+#     "cryptography>=46.0.3"
+# ]
+
+# video = [
+#     "opencv-python>=4.8.0",
+#     "moviepy>=1.0.3",
+# ]
+
+# all = [
+#     "pycryptodomex>=3.21.0",
+#     "pydub>=0.25.1",
+#     "audioop-lts>=0.2.2",
+#     "soundfile>=0.12.1",
+#     "Pillow>=10.0.0",
+#     "opencv-python>=4.8.0",
+#     "scipy>=1.11.0",
+#     "PyWavelets>=1.4.0",
+#     "opencv-python>=4.8.0",
+#     "moviepy>=1.0.3",
+# ]
+
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "mypy>=1.0.0",
+    "ruff>=0.14.10",
+    "black>=25.12.0",
+    "types-setuptools",
+]
+
+[project.scripts]
+ghostbit = "ghostbit.cli:main"
+ghostbit-audio = "ghostbit.audiostego.cli.audiostego_cli:main"
+#ghostbit-image = "ghostbit.imagestego.cli.imagestego_cli:main"
+#ghostbit-video = "ghostbit.videostego.cli.videostego_cli:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "ghostbit.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["ghostbit*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.md"]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_untyped_defs = false
+disallow_any_generics = true
+check_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.black]
+target-version = ["py313", "py314"]
+
+[tool.ruff]
+target-version = "py313"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v", 
+    "--strict-markers", 
+#    "--tb=short", 
+#    "--cov=ghostbit", 
+#    "--cov-report=term-missing", 
+#    "--cov-report=html", 
+#    "--cov-report=xml"
+    ]
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+
+[tool.coverage.run]
+source = ["ghostbit"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.0.1"
+version_files = [
+    "src/ghostbit/__init__.py:__version__"
+]
+tag_format = "v$version"
+changelog_file = "CHANGELOG.md"
+update_changelog_on_bump = false
+changelog_incremental = true
+bump_message = "chore(release): bump version $current_version → $new_version"
+
+# Commit message convention
+style = [
+    ["qmark", "fg:#ff9d00 bold"],
+    ["question", "bold"],
+    ["answer", "fg:#ff9d00 bold"],
+    ["pointer", "fg:#ff9d00 bold"],
+    ["highlighted", "fg:#ff9d00 bold"],
+    ["selected", "fg:#cc5454"],
+    ["separator", "fg:#cc5454"],
+    ["instruction", ""],
+    ["text", ""],
+    ["disabled", "fg:#858585 italic"]
+]

@@ -307,9 +307,9 @@ class AudioStegoCLI:
                         f"File requires password (version: {key_args.h22_version})"
                     )
                     print(f"\n🔒 File is encrypted (version: {key_args.h22_version})")
-                    key = getpass.getpass("Enter password (or press Enter to skip): ")
+                    key = getpass.getpass("\nEnter password (or press Enter to skip): ")
                     if not key:
-                        logger.warning("User skipped password entry")
+                        logger.warning("⚠️ User skipped password entry")
                         key_args.cancel = True
                     else:
                         logger.debug("Password entered by user")
@@ -327,13 +327,12 @@ class AudioStegoCLI:
             print(f"\n{C.WHITE}{'─' * 70}{C.RESET}\n")
             return 0 if found else 1
 
-        except KeyEnterCanceledException:
-            logger.warning("Analysis cancelled by user (key entry cancelled)")
-            print("\n⚠️  Analysis incomplete (password required)")
-            return 1
         except AudioSteganographyException as e:
             logger.error(f"Analysis failed with AudioSteganographyException: {e}")
             print(f"\n❌ Analysis failed: {e}")
+            return 1
+        except KeyEnterCanceledException:
+            logger.error("❌Analysis failed: password required")
             return 1
         except Exception as e:
             logger.exception("Unexpected error during analysis")
@@ -401,27 +400,15 @@ class AudioStegoCLI:
         logger.info("Displaying application info")
 
         self._print_header(rf"""{C.BOLD}{C.GRAY}
-                     ╭━━━━━━━━━━━━╮  
-                   ╭╯              ╰╮
-                   |                |   ┏─━┓
-                   ┃   ┏━╗    ┏━╗   ┃   ┃  ┃
-                   ┃   ║║┃    ║┃┃   ┃  ●╯ ●╯
-                ╔  ┃   ╚━┛    ╚━┛   ┃
-                ┃  ┃                ┃
-               ●╯  ┃      ━──╯      ┃  
-                   ┃                ┃ 
-                  ╭╯                ╰╮
-                  ╰━╯╰━━━╯╰━━╯╰━━━╯╰━╯ 
-                ┏━╸╻ ╻┏━┓┏━┓╺┳╸┏┓ ╺┓ ╺┳╸
-                ║╺╗║━╣║┃║╚━┓ ║ ║┻┓ ║  ║ :
-                ┗━┛╹ ╹┗━┛┗━╝ ╹ ┗━╝╺┻╸ ╹ 
-             ┏━┓╻ ╻╺┳┓╺┓ ┏━┓┏━┓╺┳╸╔━╸┏━╸┏━┓
-             ║━╣║ ║ ║║ ║ ║┃║╚━┓ ║ ┣╸ ║╺╗║┃║
-             ╹ ╹┗━┛╺┻╝╺┻╸┗━┛┗━╝ ╹ ╚━╸┗━┛┗━┛ (v{__version__})                 
+  ┏━╸╻ ╻┏━┓┏━┓╺┳╸┏┓ ╺┓ ╺┳╸  ┏━┓╻ ╻╺┳┓╺┓ ┏━┓┏━┓╺┳╸╔━╸┏━╸┏━┓
+  ║╺╗║━╣║┃║╚━┓ ║ ║┻┓ ║  ║ : ║━╣║ ║ ║║ ║ ║┃║╚━┓ ║ ┣╸ ║╺╗║┃║
+  ┗━┛╹ ╹┗━┛┗━╝ ╹ ┗━╝╺┻╸ ╹   ╹ ╹┗━┛╺┻╝╺┻╸┗━┛┗━╝ ╹ ╚━╸┗━┛┗━┛ (v{__version__})                 
         {C.RESET}""")
 
         print(f"  {C.BOLD}{C.BLUE}Features:{C.RESET}")
-        print(f"    {C.BLUE}•{C.RESET} Password protection using Argon2id encryption")
+        print(
+            f"    {C.BLUE}•{C.RESET} Password protection using AES-GCM with Argon2id KDF"
+        )
         print(f"    {C.BLUE}•{C.RESET} Multiple files in one carrier")
         print(f"    {C.BLUE}•{C.RESET} Multi-format support")
 
@@ -564,23 +551,9 @@ class AudioStegoCLI:
 def main() -> Optional[int]:
     parser = ErrorFriendlyArgumentParser(
         description=rf"""{C.BOLD}{C.GRAY}
-                     ╭━━━━━━━━━━━━╮  
-                   ╭╯              ╰╮
-                   |                |   ┏─━┓
-                   ┃   ┏━╗    ┏━╗   ┃   ┃  ┃
-                   ┃   ║║┃    ║┃┃   ┃  ●╯ ●╯
-                ╔  ┃   ╚━┛    ╚━┛   ┃
-                ┃  ┃                ┃
-               ●╯  ┃      ━──╯      ┃  
-                   ┃                ┃ 
-                  ╭╯                ╰╮
-                  ╰━╯╰━━━╯╰━━╯╰━━━╯╰━╯ 
-                ┏━╸╻ ╻┏━┓┏━┓╺┳╸┏┓ ╺┓ ╺┳╸
-                ║╺╗║━╣║┃║╚━┓ ║ ║┻┓ ║  ║ :
-                ┗━┛╹ ╹┗━┛┗━╝ ╹ ┗━╝╺┻╸ ╹ 
-             ┏━┓╻ ╻╺┳┓╺┓ ┏━┓┏━┓╺┳╸╔━╸┏━╸┏━┓
-             ║━╣║ ║ ║║ ║ ║┃║╚━┓ ║ ┣╸ ║╺╗║┃║
-             ╹ ╹┗━┛╺┻╝╺┻╸┗━┛┗━╝ ╹ ╚━╸┗━┛┗━┛ (v{__version__})    
+  ┏━╸╻ ╻┏━┓┏━┓╺┳╸┏┓ ╺┓ ╺┳╸  ┏━┓╻ ╻╺┳┓╺┓ ┏━┓┏━┓╺┳╸╔━╸┏━╸┏━┓
+  ║╺╗║━╣║┃║╚━┓ ║ ║┻┓ ║  ║ : ║━╣║ ║ ║║ ║ ║┃║╚━┓ ║ ┣╸ ║╺╗║┃║
+  ┗━┛╹ ╹┗━┛┗━╝ ╹ ┗━╝╺┻╸ ╹   ╹ ╹┗━┛╺┻╝╺┻╸┗━┛┗━╝ ╹ ╚━╸┗━┛┗━┛ (v{__version__})   
         {C.RESET}""",
         formatter_class=ColorHelpFormatter,
         prog="ghostbit audio",
@@ -598,6 +571,7 @@ def main() -> Optional[int]:
   
   {C.BOLD}{C.BLUE}Analyze:{C.RESET}
     {C.BOLD}{C.PINK}ghostbit audio{C.RESET} {C.GREEN}analyze{C.RESET} {C.GREEN}-i{C.RESET} {C.CYAN}audio.wav{C.RESET} {C.GREEN}-v{C.RESET}
+        
         """,
     )
 

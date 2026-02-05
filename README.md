@@ -2,7 +2,7 @@
 
 <p align='center'><img src="assets/ghostbit.png" width='180' alt="img"></p>
 
-<p align='center'>A M<small>ULTI-</small>F<small>ORMAT</small> S<small>TEGANOGRAPHY</small> T<small>OOLKIT</small></p>
+<p align='center'>GH0STB1T:<br>A M<small>ULTI-</small>F<small>ORMAT</small> S<small>TEGANOGRAPHY</small> T<small>OOLKIT</small></p>
 
 <p align="center">
   <a href="https://www.apache.org/licenses/LICENSE-2.0">
@@ -17,12 +17,6 @@
   <a href="https://img.shields.io/github/languages/code-size/kariemoorman/ghostbit">
     <img src="https://img.shields.io/github/languages/code-size/kariemoorman/ghostbit" alt="Code Size">
   </a>
-  <!-- <a href="https://github.com/kariemoorman/ghostbit/stargazers">
-    <img src="https://img.shields.io/github/stars/kariemoorman/ghostbit" alt="Stars">
-  </a>
-  <a href="https://github.com/kariemoorman/ghostbit/network/members">
-    <img src="https://img.shields.io/github/forks/kariemoorman/ghostbit" alt="Forks">
-  </a> -->
 </p>
 <p align='center'>
   <a href="https://github.com/kariemoorman/ghostbit/actions/workflows/test.yml/badge.svg">
@@ -36,28 +30,99 @@
 
 ---
 
+## Why?
+
+<details>
+<summary><b>Architectural Modernization</b></summary>
+
+<br>
+
+This implementation represents a complete architectural migration from platform-dependent Java and .NET codebases to a unified Python solution, delivering:
+
+- **Platform Independence:** Eliminates platform-specific runtime dependencies, ensuring portability across heterogeneous computing environments (Windows, macOS, and Linux). 
+
+- **Memory Efficiency:** Eliminates JVM heap overhead, reducing baseline memory consumption and enabling efficient operation on resource-constrained systems while maintaining full functionality.
+
+- **Auditability:** Eliminates reliance on platform-specific cryptographic APIs or closed-source runtime components in favor of open-source Python cryptography, enabling independent security audits and transparent verification of the implementation.
+
+- **Type Safety:** This implementation targets Python 3.13+ to leverage modern type annotations and static analysis capabilities, ensuring type safety across the entire codebase.
+
+These improvements reduce deployment complexity and computational overhead, facilitating reliable and efficient operation in resource-constrained environments for both human operators and automated LLM-driven workflows.
+
+</details>
+
+<details>
+<summary><b>Security Upgrade</b></summary>
+
+<br>
+
+Longstanding steganography tools (e.g., [OpenStego](https://www.openstego.com/), [DeepSound](https://github.com/Jpinsoft/DeepSound), [SilentEye](https://github.com/achorein/silenteye/)) use outdated cryptographic primitives that leave hidden data vulnerable to attack. These tools rely on weak key derivative functions (KDFs) such as direct hashing of passwords using MD5, SHA-1, or SHA-256, which provide no brute-force resistance. They also rely on legacy encryption modes such as AES-CBC without authentication. These modes provide confidentiality only, leaving payloads vulnerable to undetected modification, bit-flipping attacks, and—under common error-handling patterns—padding decryption. 
+
+This implementation pairs existing steganography protocols with modern, audited cryptographic standards to ensure secure information hiding:
+
+| Component | Algorithm | Parameters | Security Properties |
+|-----------|-----------|------------|---------------------|
+| **Key Derivation** | Argon2id | 64MB memory, 3 iterations, parallelism=4 | - Memory-hard function<br> - Hybrid protection against side-channel attacks |
+| **Encryption** | AES-256-GCM | 96-bit random nonce, 128-bit auth tag | - Authenticated Encryption with Associated Data (AEAD)<br>- Confidentiality + Integrity + Authenticity in single operation |
+| **Salt** | Random | 128-bit, unique per file | - Prevention against rainbow table attacks<br> - Unique keys even with identical passwords |
+
+<details>
+<summary><b>What Does This Mean?</b></summary>
+
+<br>
+
+**NIST/FIPS Compliant Cryptography**
+- Transition to algorithms approved by national security standards (Argon2id, AES-256-GCM); the same cryptographic primitives used in TLS 1.3, Signal, Bitwarden, and enterprise security systems.
+
+**Uncrackable Passwords**
+- Legacy SHA-256 allows attackers to test billions of passwords per second on modern GPUs. Argon2id slows attackers to only thousands of tests per second, making brute-force attacks impractical (memory-hard by design). Even weak passwords (8 characters) gain years of protection against brute-force attacks.
+
+**Tamper Detection & Integrity Verification**
+- Legacy AES-CBC allows for undetected tampering, bit-flipping attacks, and payload manipulation. AES-GCM cryptographically authenticates every byte of hidden data. Any modification (e.g., a single bit flip) causes immediate decryption failure. It is now mathematically impossible to alter data without detection.
+
+**Eliminates Padding Oracle Vulnerabilities**
+- Legacy AES-CBC with PKCS#7 padding is vulnerable to adaptive chosen-ciphertext attacks. Attackers can decrypt data without the password by observing error messages. AES-GCM uses authenticated encryption: no padding, no oracle, constant-time failure.
+
+</details>
+
+<br>
+
+</details>
+
+
+---
+
 ## Features
 
-- 🎵 **Multi-format Support** - Works with WAV, MP3, FLAC, M4A, AIFF
-- 🔐 **Strong Encryption** - AES-256 with Argon2id key derivation for embedded files
-- 📑 **Multiple Files** - Hide multiple files in a single carrier
-- 🎛️ **Quality Control** - Choose between audio quality and storage capacity
-- 💻 **Python CLI & API** - Use from command line or integrate into your code
-- 🐳 **Docker Ready** - Containerized deployment available
-- 🤖 **LLM Integration** - Built-in skills system for AI assistants
-- 🖥️ **Cross-platform Compatibility** - MacOS, Linux, Windows
+<b>Multimedia Steganography:</b> Multi-format support across audio, images, and video  
+ • Audio: WAV / MP3 / FLAC / M4A / AIFF  
+ • Image: BMP / PNG / JPEG / WEBP / TIFF / SVG / GIF  
+ • Video: MP4 / MKV / MOV / AVI 
+
+<b>Strong Encryption:</b> AES-GCM with Argon2id key derivation for embedded files (see [Security Upgrade](#why))
+
+<b>CLI:</b> Easy-to-use command line interface (see [CLI](#-cli))
+
+<b>API:</b> Project integration via API (see [API](#-python-api))
+
+<b>Docker:</b> Containerized deployment support (see [Docker](#-docker))
+
+<b>LLM Integration:</b> Built-in skills system for LLM-driven workflows (see [LLM Integration](#llm-integration))
+
+<b>Cross-Platform Compatibility:</b> MacOS, Linux, Windows
+
 
 
 ## Installation
 
-❗ **Requirements**
+<b>Requirements</b>
 
 - Python 3.13+
 - FFmpeg (for audio format conversion)
 
 <br>
 
-**GitHub Release**
+<b>GitHub Release</b>
 
 Download the latest `.whl` file from [Releases](https://github.com/kariemoorman/ghostbit/releases):
 
@@ -65,7 +130,7 @@ Download the latest `.whl` file from [Releases](https://github.com/kariemoorman/
 pip install git+https://github.com/kariemoorman/ghostbit.git@latest
 ```
 
-**Development Build**
+<b>Development Build</b>
 
 Install from source for development or to access the latest features:
 
@@ -90,8 +155,11 @@ GH0STB1T CLI provides quick encoding/decoding/analysis operations directly from 
 <br> 
 
 ```bash
-
+# Audio
 ghostbit audio encode -i <audio_filepath> -s <secret_filepath> <secret_filepath> -q {low,normal,high} -o <output_filename>.<desired_format> -p
+
+# Image
+ghostbit image encode -i <image_filepath> -s <secret_filepath> <secret_filepath> -p
 
 ```
 
@@ -103,8 +171,11 @@ ghostbit audio encode -i <audio_filepath> -s <secret_filepath> <secret_filepath>
 <br> 
 
 ```bash
-
+# Audio
 ghostbit audio capacity -i <audio_filepath> -q {low,normal,high}
+
+# Image
+ghostbit image capacity -i <image_filepath> 
 
 ```
 
@@ -116,8 +187,11 @@ ghostbit audio capacity -i <audio_filepath> -q {low,normal,high}
 <br>
 
 ```bash
-
+# Audio
 ghostbit audio decode -i <audio_filepath> -p
+
+# Image
+ghostbit image decode -i <image_filepath> -p
 
 ```
 
@@ -130,8 +204,11 @@ ghostbit audio decode -i <audio_filepath> -p
 
 
 ```bash
+# Audio
+ghostbit audio analyze -i <audio_filepath>
 
-ghostbit audio analyze -i <audio_filepath> -p
+# Image
+ghostbit image analyze -i <image_filepath>
 
 ```
 
@@ -418,9 +495,9 @@ GH0STB1T includes a Skills system designed for seamless integration with LLMs an
 
 GH0STB1T provides three specialized skill documents:
 
-1. [**Steganography**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/audiostego/skills/steganography/SKILL.md) - Complete usage guide with examples
-2. [**Capacity**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/audiostego/skills/capacity/SKILL.md) - Capacity planning and optimization strategies
-3. [**Troubleshooting**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/audiostego/skills/troubleshooting/SKILL.md) - Common issues and solutions
+1. [**Audio Steganography**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/audiostego/skills/steganography/SKILL.md) - Complete usage guide with examples
+2. [**Audio Capacity**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/audiostego/skills/capacity/SKILL.md) - Capacity planning and optimization strategies
+3. [**Audio Troubleshooting**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/audiostego/skills/troubleshooting/SKILL.md) - Common issues and solutions
 
 
 ### Quick Start for LLMs

@@ -87,7 +87,6 @@ class AudioMultiFormatCoder(Coder):
         self.temp_files.append(temp_wav_path)
 
         logger.info(f"Converting {ext} to WAV: {input_file} -> {temp_wav_path}")
-        print(f"Converting {ext} to WAV format...")
 
         try:
             if ext in [".flac"]:
@@ -138,7 +137,6 @@ class AudioMultiFormatCoder(Coder):
             )
 
         logger.info(f"Converting WAV to {ext.upper()}: {wav_file} -> {output_file}")
-        print(f"Converting WAV to {ext.upper()} format...")
 
         try:
             if ext == ".flac":
@@ -422,9 +420,9 @@ class AudioMultiFormatCoder(Coder):
                 print("\n✅ Analysis Complete!")
                 return False
 
-        except Exception as e:
-            logger.exception("Analysis failed")
-            raise AudioMultiFormatCoderException(f"Analysis failed: {e}")
+        except AudioSteganographyException as e:
+            logger.error(f"❌ Analysis failed: {e}")
+            return False
 
         finally:
             self.cleanup_temp_files()

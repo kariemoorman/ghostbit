@@ -288,7 +288,10 @@ class BaseStego:
             position += file_size
 
             item = SecretFileInfoItem(
-                full_path=file_name, is_in_add_list=False, file_size=file_size, file_data=file_data
+                full_path=file_name,
+                is_in_add_list=False,
+                file_size=file_size,
+                file_data=file_data,
             )
 
             extracted_files.append(item)
@@ -545,7 +548,9 @@ class PaletteStego(BaseStego):
                     return capacity_bytes
                 else:
                     if img.mode != "P":
-                        img = img.convert("P", palette=Image.Palette.ADAPTIVE, colors=256)
+                        img = img.convert(
+                            "P", palette=Image.Palette.ADAPTIVE, colors=256
+                        )
 
                     palette = img.getpalette()
                     if not palette:
@@ -689,7 +694,7 @@ class PaletteStego(BaseStego):
         logger.info(f"Successfully embedded {bit_idx} bits across {len(frames)} frames")
         return frames
 
-    def decode(self, gif_path: str) -> bytes:
+    def decode(self, gif_path: str) -> bytes | None:
         """Extract full payload from GIF"""
         if not os.path.exists(gif_path):
             raise ImageSteganographyException(f"GIF not found: {gif_path}")
@@ -709,10 +714,10 @@ class PaletteStego(BaseStego):
             logger.debug("Extracted header data from GIF")
 
             if header_data[:4] != self.MAGIC:
-                raise ImageSteganographyException(
-                    f"No hidden data found in GIF - invalid magic number. "
-                    f"Expected {self.MAGIC.hex()}, got {header_data[:4].hex()}"
+                logger.debug(
+                    f"No hidden data found in GIF - invalid magic number. Expected {self.MAGIC.hex()}, got {header_data[:4].hex()}"
                 )
+                return None
 
             version = header_data[4]
             algorithm = Algorithm(header_data[5])
@@ -859,13 +864,14 @@ class SVGStego(BaseStego):
         logger.info("SVG encoding complete")
         return svg_content
 
-    def decode(self, svg_path: str) -> bytes:
+    def decode(self, svg_path: str) -> bytes | None:
         with open(svg_path, "r", encoding="utf-8") as f:
             svg_content = f.read()
 
         match = re.search(r"<!--\s*STGX:([A-Za-z0-9+/=]+)\s*-->", svg_content)
         if not match:
-            raise ImageSteganographyException("No hidden data found in SVG")
+            logger.debug("No hidden data found in SVG")
+            return None
 
         encoded = match.group(1)
 

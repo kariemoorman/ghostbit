@@ -10,12 +10,12 @@ from ghostbit.imagestego.core.image_multiformat_coder import (
     ImageMultiFormatCoder,
     ImageMultiFormatCoderException,
     CapacityResult,
-    AnalysisResult,
+    AnalysisResult
 )
-from ghostbit.imagestego.core.image_steganograpy import (
+from ghostbit.imagestego.core.image_steganography import (
     Algorithm,
     SecretFileInfoItem,
-    ImageSteganographyException,
+    ImageSteganographyException
 )
 
 

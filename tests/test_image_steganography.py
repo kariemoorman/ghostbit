@@ -7,7 +7,7 @@ from PIL import Image
 from typing import List
 import tempfile
 
-from ghostbit.imagestego.core.image_steganograpy import (
+from ghostbit.imagestego.core.image_steganography import (
     Algorithm,
     ImageSteganographyException,
     SecretFileInfoItem,

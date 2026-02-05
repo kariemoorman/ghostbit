@@ -1,15 +1,15 @@
-# src/ghostbit/audiostego/skills/__init__.py
-"""Audio Skills System for LLM integration"""
+# src/ghostbit/imagestego/skills/__init__.py
+"""Image Skills System for LLM integration"""
 
 import re
 from pathlib import Path
 from typing import List, Dict, Optional
 
-AUDIO_SKILLS_DIR = Path(__file__).parent
+IMAGE_SKILLS_DIR = Path(__file__).parent
 
 
-class AudioSkill:
-    """Represents an audio skill with documentation"""
+class ImageSkill:
+    """Represents a skill with documentation"""
 
     def __init__(self, name: str, path: Path):
         self.name = name
@@ -86,7 +86,7 @@ class AudioSkill:
         return sections
 
     def get_examples(self) -> List[Dict[str, str]]:
-        """Extract code examples from the skill"""
+        """Extract code examples from the Imageskill"""
         examples = []
 
         pattern = r"```(\w+)?\n(.*?)```"
@@ -98,14 +98,14 @@ class AudioSkill:
         return examples
 
     def __str__(self) -> str:
-        return f"AudioSkill(name='{self.name}', title='{self.title}')"
+        return f"ImageSkill(name='{self.name}', title='{self.title}')"
 
 
-class AudioSkillLoader:
+class ImageSkillLoader:
     """Load and manage skills"""
 
     def __init__(self) -> None:
-        self.skills_dir = AUDIO_SKILLS_DIR
+        self.skills_dir = IMAGE_SKILLS_DIR
 
     def list_skills(self) -> List[str]:
         """List all available skill names"""
@@ -117,7 +117,7 @@ class AudioSkillLoader:
                     skills.append(item.name)
         return sorted(skills)
 
-    def load_skill(self, name: str) -> AudioSkill:
+    def load_skill(self, name: str) -> ImageSkill:
         """Load a specific skill by name"""
         skill_path = self.skills_dir / name
 
@@ -131,9 +131,9 @@ class AudioSkillLoader:
         if not skill_file.exists():
             raise ValueError(f"SKILL.md not found in skill '{name}'")
 
-        return AudioSkill(name, skill_path)
+        return ImageSkill(name, skill_path)
 
-    def get_all_skills(self) -> List[AudioSkill]:
+    def get_all_skills(self) -> List[ImageSkill]:
         """Get all available skills"""
         return [self.load_skill(name) for name in self.list_skills()]
 
@@ -152,8 +152,8 @@ class AudioSkillLoader:
         else:
             skills = [self.load_skill(name) for name in skill_names]
 
-        context = "# AudioStego Skills Documentation\n\n"
-        context += "This documentation provides guidance for using AudioStego.\n\n"
+        context = "# ImageStego Skills Documentation\n\n"
+        context += "This documentation provides guidance for using ImageStego.\n\n"
 
         for skill in skills:
             context += "\n---\n\n"
@@ -163,29 +163,29 @@ class AudioSkillLoader:
         return context
 
 
-def load_audio_skill(name: str) -> AudioSkill:
-    """Load a audio skill by name"""
-    loader = AudioSkillLoader()
+def load_image_skill(name: str) -> ImageSkill:
+    """Load a skill by name"""
+    loader = ImageSkillLoader()
     return loader.load_skill(name)
 
 
-def list_audio_skills() -> List[str]:
-    """List all available audio skills"""
-    loader = AudioSkillLoader()
+def list_image_skills() -> List[str]:
+    """List all available skills"""
+    loader = ImageSkillLoader()
     return loader.list_skills()
 
 
-def get_audio_llm_context(skill_names: Optional[List[str]] = None) -> str:
+def get_image_llm_context(skill_names: Optional[List[str]] = None) -> str:
     """Get formatted context for LLM"""
-    loader = AudioSkillLoader()
+    loader = ImageSkillLoader()
     return loader.get_llm_context(skill_names)
 
 
 __all__ = [
-    "AudioSkill",
-    "AudioSkillLoader",
-    "load_audio_skill",
-    "list_audio_skills",
-    "get_audio_llm_context",
-    "AUDIO_SKILLS_DIR",
+    "ImageSkill",
+    "ImageSkillLoader",
+    "IMAGE_SKILLS_DIR",
+    "load_image_skill",
+    "list_image_skills",
+    "get_image_llm_context",
 ]

@@ -27,10 +27,6 @@ Closes #
 ### Test Configuration
 - **OS**: 
 - **Python Version**: 
-- **Pydub Version**: 
-- **FFmpeg Version**: 
-- **Soundfile Version**: 
-- **Pycrytodome Version**: 
 
 ### Test Cases
 - [ ] Unit tests pass locally

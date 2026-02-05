@@ -14,10 +14,10 @@ from ghostbit.audiostego.core.audio_multiformat_coder import (
 )
 
 from ghostbit.audiostego.skills import (
-    SkillLoader,
-    load_skill,
-    list_skills,
-    get_llm_context,
+    AudioSkillLoader,
+    load_audio_skill,
+    list_audio_skills,
+    get_audio_llm_context,
 )
 
 __all__ = [
@@ -29,8 +29,8 @@ __all__ = [
     "AudioSteganographyException",
     "KeyEnterCanceledException",
     "AudioMultiFormatCoderException",
-    "SkillLoader",
-    "load_skill",
-    "list_skills",
-    "get_llm_context",
+    "AudioSkillLoader",
+    "load_audio_skill",
+    "list_audio_skills",
+    "get_audio_llm_context",
 ]

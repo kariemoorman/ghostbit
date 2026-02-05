@@ -8,10 +8,10 @@ import argparse
 
 from ghostbit.imagestego.cli.imagestego_cli import (
     ImageStegoCLI,
-    main,
+    main
 )
 
-from ghostbit.imagestego.core.image_multiformat_coder import ImageMultiFormatCoder, ImageMultiFormatCoderException
+from ghostbit.imagestego.core.image_multiformat_coder import ImageMultiFormatCoderException
 
 
 """
@@ -159,6 +159,7 @@ class TestDecodeCommand:
     @pytest.fixture
     def encoded_image(self, tmp_path, monkeypatch):
         """Create an encoded test image"""
+        from ghostbit.imagestego.core.image_multiformat_coder import ImageMultiFormatCoder
         
         cover = Image.new("RGB", (300, 300))
         cover_path = tmp_path / "cover.png"
@@ -196,6 +197,7 @@ class TestDecodeCommand:
 
     def test_decode_with_password_string(self, cli, tmp_path, monkeypatch):
         """Test decoding with password provided as string"""
+        from ghostbit.imagestego.core.image_multiformat_coder import ImageMultiFormatCoder
         
         cover = Image.new("RGB", (300, 300))
         cover_path = tmp_path / "cover.png"

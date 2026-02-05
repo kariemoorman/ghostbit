@@ -18,7 +18,7 @@ class RequirementsChecker:
         self.CRYPTOGRAPHY = False
         self.SCIPY = False
         self.PYWAVELETS = False
-        self.JPEGIO = False
+        self.ARGON = False
 
     def check_requirements(self, print_results: bool = False) -> None:
         self.PIL = importlib.util.find_spec("PIL") is not None
@@ -35,15 +35,14 @@ class RequirementsChecker:
         logger.debug(
             f"PYWAVELETS: {'Available' if self.PYWAVELETS else 'Not available'}"
         )
-        self.JPEGIO = importlib.util.find_spec("jpegio") is not None
-        logger.debug(f"JPEGIO: {'Available' if self.JPEGIO else 'Not available'}")
+        self.ARGON = importlib.util.find_spec("argon2-cffi") is not None
+        logger.debug(f"ARGON: {'Available' if self.ARGON else 'Not available'}")
         status: Dict[str, bool] = {
             "Pillow": self.PIL,
             "numpy": self.NUMPY,
             "cryptography": self.CRYPTOGRAPHY,
             "scipy": self.SCIPY,
             "PyWavelets": self.PYWAVELETS,
-            "jpegio": self.JPEGIO,
         }
 
         if print_results:

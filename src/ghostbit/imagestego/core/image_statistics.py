@@ -359,13 +359,11 @@ class StatisticalAnalysis:
             cover_stats = StatisticalAnalysis.gif_chi_square(cover_path)
             stego_stats = StatisticalAnalysis.gif_chi_square(stego_path)
 
-            # Extract and type-narrow the values
             cover_pixel_raw = cover_stats["frames_pixel"]
             stego_pixel_raw = stego_stats["frames_pixel"]
             cover_palette_raw = cover_stats["frames_palette"]
             stego_palette_raw = stego_stats["frames_palette"]
 
-            # Type narrowing: ensure we have lists
             if not isinstance(cover_pixel_raw, list) or not isinstance(
                 stego_pixel_raw, list
             ):
@@ -434,77 +432,6 @@ class StatisticalAnalysis:
             raise ImageStatisticsException(
                 f"Failed to calculate GIF chi-square delta: {e}"
             )
-
-    # @staticmethod
-    # def gif_chi_square_delta(cover_path: str, stego_path: str) -> Dict[str, Union[List[float], float]]:
-    #     """
-    #     Compute frame-by-frame chi-square delta for GIFs (palette & pixel).
-    #     """
-    #     try:
-    #         logger.info(
-    #             f"Calculating GIF chi-square delta: {cover_path} vs {stego_path}"
-    #         )
-
-    #         cover_stats = StatisticalAnalysis.gif_chi_square(cover_path)
-    #         stego_stats = StatisticalAnalysis.gif_chi_square(stego_path)
-
-    #         cover_pixel = cover_stats["frames_pixel"]
-    #         stego_pixel = stego_stats["frames_pixel"]
-    #         cover_palette = cover_stats["frames_palette"]
-    #         stego_palette = stego_stats["frames_palette"]
-
-    #         n_frames = min(len(cover_pixel), len(stego_pixel))
-
-    #         if n_frames == 0:
-    #             logger.warning("No frames to compare")
-    #             return {
-    #                 "delta_pixel_per_frame": [],
-    #                 "delta_pixel_average": 0.0,
-    #                 "delta_pixel_median": 0.0,
-    #                 "delta_pixel_max_abs": 0.0,
-    #                 "delta_palette_per_frame": [],
-    #                 "delta_palette_average": 0.0,
-    #                 "delta_palette_median": 0.0,
-    #                 "delta_palette_max_abs": 0.0,
-    #             }
-
-    #         delta_pixel = [
-    #             stego_pixel[i] - cover_pixel[i]
-    #             for i in range(n_frames)
-    #         ]
-
-    #         delta_palette = [
-    #             stego_palette[i] - cover_palette[i]
-    #             for i in range(min(len(cover_palette), len(stego_palette)))
-    #         ]
-
-    #         results: Dict[str, Union[List[float], float]] = {
-    #             "delta_pixel_per_frame": delta_pixel,
-    #             "delta_pixel_average": float(np.mean(delta_pixel)),
-    #             "delta_pixel_median": float(np.median(delta_pixel)),
-    #             "delta_pixel_max_abs": float(np.max(np.abs(delta_pixel))),
-    #             "delta_palette_per_frame": delta_palette,
-    #             "delta_palette_average": (
-    #                 float(np.mean(delta_palette)) if delta_palette else 0.0
-    #             ),
-    #             "delta_palette_median": (
-    #                 float(np.median(delta_palette)) if delta_palette else 0.0
-    #             ),
-    #             "delta_palette_max_abs": (
-    #                 float(np.max(np.abs(delta_palette))) if delta_palette else 0.0
-    #             ),
-    #         }
-
-    #         logger.info(
-    #             f"GIF chi-square delta complete: pixel_avg={results['delta_pixel_average']:.4f}"
-    #         )
-    #         return results
-
-    #     except Exception as e:
-    #         logger.error(f"Error calculating gif_chi_square_delta: {e}")
-    #         raise ImageStatisticsException(
-    #             f"Failed to calculate GIF chi-square delta: {e}"
-    #         )
 
     @staticmethod
     def gif_chi_square(gif_path: str) -> Dict[str, Union[List[float], float]]:

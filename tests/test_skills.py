@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 import pytest
 from pathlib import Path
-import ghostbit.audiostego.skills as skills_module
+import ghostbit.audiostego.skills as audio_skills_module
 from ghostbit.audiostego.skills import (
-    Skill,
-    SkillLoader,
-    load_skill,
-    list_skills,
-    get_llm_context,
-    SKILLS_DIR,
+    AudioSkill,
+    AudioSkillLoader,
+    load_audio_skill,
+    list_audio_skills,
+    get_audio_llm_context,
+    AUDIO_SKILLS_DIR,
 )
 
 
@@ -75,8 +75,8 @@ console.log("test");
     def test_skill_initialization(
         self, temp_skill_dir: Path, sample_skill_content: str
     ) -> None:
-        """Test Skill object initialization"""
-        skill = Skill("test_skill", temp_skill_dir)
+        """Test AudioSkill object initialization"""
+        skill = AudioSkill("test_skill", temp_skill_dir)
 
         assert skill.name == "test_skill"
         assert skill.path == temp_skill_dir
@@ -85,8 +85,8 @@ console.log("test");
         assert "test skill for unit testing" in skill.description.lower()
 
     def test_skill_metadata_parsing(self, temp_skill_dir: Path) -> None:
-        """Test metadata parsing from skill markdown"""
-        skill = Skill("test_skill", temp_skill_dir)
+        """Test metadata parsing from audio skill markdown"""
+        skill = AudioSkill("test_skill", temp_skill_dir)
 
         assert skill.title == "Test Skill"
         assert skill.description
@@ -99,12 +99,12 @@ console.log("test");
         skill_file = skill_dir / "SKILL.md"
         skill_file.write_text("No title here\n\nJust content")
 
-        skill = Skill("no_title_skill", skill_dir)
+        skill = AudioSkill("no_title_skill", skill_dir)
         assert skill.title == "no_title_skill"
 
     def test_get_section(self, temp_skill_dir: Path) -> None:
         """Test extracting a specific section"""
-        skill = Skill("test_skill", temp_skill_dir)
+        skill = AudioSkill("test_skill", temp_skill_dir)
 
         overview = skill.get_section("Overview")
         assert "overview of the skill" in overview.lower()
@@ -117,14 +117,14 @@ console.log("test");
 
     def test_get_section_not_found(self, temp_skill_dir: Path) -> None:
         """Test getting a section that doesn't exist"""
-        skill = Skill("test_skill", temp_skill_dir)
+        skill = AudioSkill("test_skill", temp_skill_dir)
 
         nonexistent = skill.get_section("Nonexistent Section")
         assert nonexistent == ""
 
     def test_get_section_with_subsections(self, temp_skill_dir: Path) -> None:
         """Test extracting section with subsections"""
-        skill = Skill("test_skill", temp_skill_dir)
+        skill = AudioSkill("test_skill", temp_skill_dir)
 
         advanced = skill.get_section("Advanced Features")
         assert "Subsection 1" in advanced
@@ -133,7 +133,7 @@ console.log("test");
 
     def test_get_all_sections(self, temp_skill_dir: Path) -> None:
         """Test getting all sections as dictionary"""
-        skill = Skill("test_skill", temp_skill_dir)
+        skill = AudioSkill("test_skill", temp_skill_dir)
 
         sections = skill.get_all_sections()
 
@@ -148,7 +148,7 @@ console.log("test");
 
     def test_get_examples(self, temp_skill_dir: Path) -> None:
         """Test extracting code examples"""
-        skill = Skill("test_skill", temp_skill_dir)
+        skill = AudioSkill("test_skill", temp_skill_dir)
 
         examples = skill.get_examples()
 
@@ -173,7 +173,7 @@ console.log("test");
         skill_file = skill_dir / "SKILL.md"
         skill_file.write_text("# Test\n\n```\ncode without language\n```")
 
-        skill = Skill("no_lang_skill", skill_dir)
+        skill = AudioSkill("no_lang_skill", skill_dir)
         examples = skill.get_examples()
 
         assert len(examples) == 1
@@ -181,16 +181,16 @@ console.log("test");
         assert examples[0]["code"] == "code without language"
 
     def test_skill_str_representation(self, temp_skill_dir: Path) -> None:
-        """Test string representation of Skill"""
-        skill = Skill("test_skill", temp_skill_dir)
+        """Test string representation of AudioSkill"""
+        skill = AudioSkill("test_skill", temp_skill_dir)
 
         skill_str = str(skill)
         assert "test_skill" in skill_str
         assert "Test Skill" in skill_str
 
 
-class TestSkillLoader:
-    """Test suite for SkillLoader class"""
+class TestAudioSkillLoader:
+    """Test suite for AudioSkillLoader class"""
 
     @pytest.fixture
     def temp_skills_dir(self, tmp_path: Path) -> Path:
@@ -216,19 +216,19 @@ class TestSkillLoader:
         return skills_dir
 
     @pytest.fixture
-    def skill_loader(self, temp_skills_dir: Path, monkeypatch) -> SkillLoader:
-        """Create SkillLoader with temp directory"""
-        loader = SkillLoader()
+    def skill_loader(self, temp_skills_dir: Path, monkeypatch) -> AudioSkillLoader:
+        """Create AudioSkillLoader with temp directory"""
+        loader = AudioSkillLoader()
         monkeypatch.setattr(loader, "skills_dir", temp_skills_dir)
         return loader
 
-    def test_skill_loader_initialization(self) -> None:
-        """Test SkillLoader initialization"""
-        loader = SkillLoader()
-        assert loader.skills_dir == SKILLS_DIR
+    def test_audio_skill_loader_initialization(self) -> None:
+        """Test AudioSkillLoader initialization"""
+        loader = AudioSkillLoader()
+        assert loader.skills_dir == AUDIO_SKILLS_DIR
         assert loader.skills_dir.exists()
 
-    def test_list_skills(self, skill_loader: SkillLoader) -> None:
+    def test_list_audio_skills(self, skill_loader: AudioSkillLoader) -> None:
         """Test listing available skills"""
         skills = skill_loader.list_skills()
 
@@ -240,16 +240,16 @@ class TestSkillLoader:
         assert "_hidden" not in skills
         assert skills == sorted(skills)
 
-    def test_load_skill(self, skill_loader: SkillLoader) -> None:
+    def test_load_audio_skill(self, skill_loader: AudioSkillLoader) -> None:
         """Test loading a specific skill"""
         skill = skill_loader.load_skill("skill1")
 
-        assert isinstance(skill, Skill)
+        assert isinstance(skill, AudioSkill)
         assert skill.name == "skill1"
         assert skill.title == "Skill 1"
         assert "First skill" in skill.content
 
-    def test_load_skill_not_found(self, skill_loader: SkillLoader) -> None:
+    def test_load_audio_skill_not_found(self, skill_loader: AudioSkillLoader) -> None:
         """Test loading a skill that doesn't exist"""
         with pytest.raises(ValueError) as exc_info:
             skill_loader.load_skill("nonexistent")
@@ -257,8 +257,8 @@ class TestSkillLoader:
         assert "not found" in str(exc_info.value).lower()
         assert "skill1" in str(exc_info.value)
 
-    def test_load_skill_missing_skill_file(
-        self, skill_loader: SkillLoader, tmp_path: Path
+    def test_load_audio_skill_missing_skill_file(
+        self, skill_loader: AudioSkillLoader, tmp_path: Path
     ) -> None:
         """Test loading a skill directory without SKILL.md"""
         invalid_dir = skill_loader.skills_dir / "no_skill_md"
@@ -269,16 +269,16 @@ class TestSkillLoader:
 
         assert "SKILL.md not found" in str(exc_info.value)
 
-    def test_get_all_skills(self, skill_loader: SkillLoader) -> None:
+    def test_get_all_audio_skills(self, skill_loader: AudioSkillLoader) -> None:
         """Test getting all skills"""
         skills = skill_loader.get_all_skills()
 
         assert isinstance(skills, list)
         assert len(skills) == 2
-        assert all(isinstance(s, Skill) for s in skills)
+        assert all(isinstance(s, AudioSkill) for s in skills)
         assert {s.name for s in skills} == {"skill1", "skill2"}
 
-    def test_get_llm_context_all_skills(self, skill_loader: SkillLoader) -> None:
+    def test_get_audio_llm_context_all_skills(self, skill_loader: AudioSkillLoader) -> None:
         """Test getting LLM context for all skills"""
         context = skill_loader.get_llm_context()
 
@@ -290,7 +290,7 @@ class TestSkillLoader:
         assert "Second skill" in context
         assert "---" in context
 
-    def test_get_llm_context_specific_skills(self, skill_loader: SkillLoader) -> None:
+    def test_get_audio_llm_context_specific_skills(self, skill_loader: AudioSkillLoader) -> None:
         """Test getting LLM context for specific skills"""
         context = skill_loader.get_llm_context(skill_names=["skill1"])
 
@@ -300,7 +300,7 @@ class TestSkillLoader:
         assert "Second skill" not in context
 
     def test_get_llm_context_multiple_specific_skills(
-        self, skill_loader: SkillLoader
+        self, skill_loader: AudioSkillLoader
     ) -> None:
         """Test getting LLM context for multiple specific skills"""
         context = skill_loader.get_llm_context(skill_names=["skill1", "skill2"])
@@ -310,13 +310,13 @@ class TestSkillLoader:
         assert "First skill" in context
         assert "Second skill" in context
 
-    def test_get_llm_context_invalid_skill(self, skill_loader: SkillLoader) -> None:
+    def test_get_llm_context_invalid_skill(self, skill_loader: AudioSkillLoader) -> None:
         """Test getting LLM context with invalid skill name"""
         with pytest.raises(ValueError):
             skill_loader.get_llm_context(skill_names=["nonexistent"])
 
 
-class TestModuleFunctions:
+class TestAudioModuleFunctions:
     """Test suite for module-level convenience functions"""
 
     @pytest.fixture
@@ -329,71 +329,71 @@ class TestModuleFunctions:
         skill_dir.mkdir()
         (skill_dir / "SKILL.md").write_text("# Test\n\nTest skill")
 
-        monkeypatch.setattr(skills_module, "SKILLS_DIR", skills_dir)
+        monkeypatch.setattr(audio_skills_module, "AUDIO_SKILLS_DIR", skills_dir)
         return skills_dir
 
-    def test_load_skill_function(self, temp_skills_dir: Path) -> None:
+    def test_load_audio_skill_function(self, temp_skills_dir: Path) -> None:
         """Test module-level load_skill function"""
-        skill = load_skill("test_skill")
+        skill = load_audio_skill("test_skill")
 
-        assert isinstance(skill, Skill)
+        assert isinstance(skill, AudioSkill)
         assert skill.name == "test_skill"
 
-    def test_list_skills_function(self, temp_skills_dir: Path) -> None:
+    def test_list_audio_skills_function(self, temp_skills_dir: Path) -> None:
         """Test module-level list_skills function"""
-        skills = list_skills()
+        skills = list_audio_skills()
 
         assert isinstance(skills, list)
         assert "test_skill" in skills
 
-    def test_get_llm_context_function(self, temp_skills_dir: Path) -> None:
+    def test_get_audio_llm_context_function(self, temp_skills_dir: Path) -> None:
         """Test module-level get_llm_context function"""
-        context = get_llm_context()
+        context = get_audio_llm_context()
 
         assert isinstance(context, str)
         assert "AudioStego Skills Documentation" in context
         assert "Test skill" in context
 
-    def test_get_llm_context_function_specific_skills(
+    def test_get_audio_llm_context_function_specific_skills(
         self, temp_skills_dir: Path
     ) -> None:
         """Test module-level get_llm_context with specific skills"""
-        context = get_llm_context(skill_names=["test_skill"])
+        context = get_audio_llm_context(skill_names=["test_skill"])
 
         assert "Test skill" in context
 
 
 @pytest.mark.integration
-class TestSkillsIntegration:
+class TestAudioSkillsIntegration:
     """Integration tests for skills system"""
 
     def test_real_skills_directory_exists(self) -> None:
         """Test that the real skills directory exists"""
-        assert SKILLS_DIR.exists()
-        assert SKILLS_DIR.is_dir()
+        assert AUDIO_SKILLS_DIR.exists()
+        assert AUDIO_SKILLS_DIR.is_dir()
 
     def test_can_list_real_skills(self) -> None:
         """Test listing skills from actual skills directory"""
-        loader = SkillLoader()
+        loader = AudioSkillLoader()
         skills = loader.list_skills()
 
         assert isinstance(skills, list)
 
     def test_load_real_skill_if_exists(self) -> None:
         """Test loading a real skill if any exist"""
-        loader = SkillLoader()
+        loader = AudioSkillLoader()
         skills = loader.list_skills()
 
         if skills:
             skill = loader.load_skill(skills[0])
-            assert isinstance(skill, Skill)
+            assert isinstance(skill, AudioSkill)
             assert skill.name == skills[0]
             assert skill.content
             assert skill.title
 
     def test_get_llm_context_from_real_skills(self) -> None:
         """Test getting LLM context from real skills"""
-        context = get_llm_context()
+        context = get_audio_llm_context()
 
         assert isinstance(context, str)
         assert "AudioStego Skills Documentation" in context
@@ -408,7 +408,7 @@ class TestEdgeCases:
         skill_dir.mkdir()
         (skill_dir / "SKILL.md").write_text("")
 
-        skill = Skill("empty_skill", skill_dir)
+        skill = AudioSkill("empty_skill", skill_dir)
         assert skill.content == ""
         assert skill.title == "empty_skill"
         assert skill.description == ""
@@ -424,7 +424,7 @@ print("hello")
 echo "world"
 ````""")
 
-        skill = Skill("code_only_skill", skill_dir)
+        skill = AudioSkill("code_only_skill", skill_dir)
         examples = skill.get_examples()
         assert len(examples) == 2
 
@@ -451,7 +451,7 @@ Advanced content here.
 """
         (skill_dir / "SKILL.md").write_text(content)
 
-        skill = Skill("section_skill", skill_dir)
+        skill = AudioSkill("section_skill", skill_dir)
 
         intro = skill.get_section("Introduction")
         assert "introduction text" in intro.lower()
@@ -482,7 +482,7 @@ echo "test"
 """
         (skill_dir / "SKILL.md").write_text(content)
 
-        skill = Skill("code_skill", skill_dir)
+        skill = AudioSkill("code_skill", skill_dir)
         examples = skill.get_examples()
 
         assert len(examples) == 2
@@ -516,7 +516,7 @@ Different content here.
 """
         (skill_dir / "SKILL.md").write_text(content)
 
-        skill = Skill("mixed_skill", skill_dir)
+        skill = AudioSkill("mixed_skill", skill_dir)
 
         install = skill.get_section("Installation")
 
@@ -530,7 +530,7 @@ Different content here.
         skill_dir.mkdir()
         (skill_dir / "SKILL.md").write_text("# Title\n\nJust content, no sections")
 
-        skill = Skill("no_sections_skill", skill_dir)
+        skill = AudioSkill("no_sections_skill", skill_dir)
         sections = skill.get_all_sections()
         assert isinstance(sections, dict)
         assert len(sections) == 0
@@ -541,7 +541,7 @@ Different content here.
         skill_dir.mkdir()
         (skill_dir / "SKILL.md").write_text("# Skill With Dashes\n\nContent")
 
-        skill = Skill("skill-with-dashes", skill_dir)
+        skill = AudioSkill("skill-with-dashes", skill_dir)
         assert skill.name == "skill-with-dashes"
         assert skill.title == "Skill With Dashes"
 
@@ -551,7 +551,7 @@ Different content here.
         skill_dir.mkdir()
         (skill_dir / "SKILL.md").write_text("# 技能\n\n日本語コンテンツ 🎵")
 
-        skill = Skill("unicode_skill", skill_dir)
+        skill = AudioSkill("unicode_skill", skill_dir)
         assert "技能" in skill.title
         assert "日本語" in skill.content
         assert "🎵" in skill.content

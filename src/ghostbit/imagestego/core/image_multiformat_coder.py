@@ -10,7 +10,7 @@ from ghostbit.imagestego.core.image_statistics import (
     StatisticalAnalysis,
     ImageStatisticsException,
 )
-from ghostbit.imagestego.core.image_steganograpy import (
+from ghostbit.imagestego.core.image_steganography import (
     Algorithm,
     LSBStego,
     SVGStego,

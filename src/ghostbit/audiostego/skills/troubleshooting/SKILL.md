@@ -175,7 +175,7 @@ coder.encode_files_multi_format(
 )
 ```
 
-**Right:**
+**Correct:**
 ```python
 # Use fresh carrier each time
 coder.encode_files_multi_format(
@@ -197,7 +197,7 @@ coder.encode_files_multi_format(
 )
 ```
 
-**Right:**
+**Correct:**
 ```python
 # Check capacity first
 base = BaseFileInfoItem(
@@ -224,7 +224,7 @@ coder.encode_files_multi_format(
 )
 ```
 
-**Right:**
+**Correct:**
 ```python
 coder.encode_files_multi_format(
     carrier_file="carrier.wav",

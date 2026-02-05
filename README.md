@@ -498,7 +498,9 @@ GH0STB1T provides three specialized skill documents:
 1. [**Audio Steganography**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/audiostego/skills/steganography/SKILL.md) - Complete usage guide with examples
 2. [**Audio Capacity**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/audiostego/skills/capacity/SKILL.md) - Capacity planning and optimization strategies
 3. [**Audio Troubleshooting**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/audiostego/skills/troubleshooting/SKILL.md) - Common issues and solutions
-
+4. [**Image Steganography**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/imagestego/skills/steganography/SKILL.md) - Complete usage guide with examples
+5. [**Image Capacity**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/imagestego/skills/capacity/SKILL.md) - Capacity planning and optimization strategies
+6. [**Image Troubleshooting**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/imagestego/skills/troubleshooting/SKILL.md) - Common issues and solutions
 
 ### Quick Start for LLMs
 
@@ -508,10 +510,10 @@ GH0STB1T provides three specialized skill documents:
 <br>
 
 ```python
-from ghostbit.audiostego import get_llm_context
+from ghostbit.audiostego import get_audio_llm_context
 
 # Get complete documentation formatted for LLMs
-context = get_llm_context()
+context = get_audio_llm_context()
 
 # Use in your LLM prompt
 prompt = f"""
@@ -536,10 +538,10 @@ Please provide a complete Python example with security best practices.
 <br>
 
 ```python
-from ghostbit.audiostego import load_skill
+from ghostbit.audiostego import load_audio_skill
 
 # Load a specific skill
-stego_skill = load_skill("steganography")
+stego_skill = load_audio_skill("steganography")
 
 # Get skill content
 print(stego_skill.content)
@@ -564,10 +566,10 @@ print(best_practices)
 <br>
 
 ```python
-from ghostbit.audiostego import get_llm_context
+from ghostbit.audiostego import get_audio_llm_context
 
 # Prepare context
-skills_context = get_llm_context()
+skills_context = get_audio_llm_context()
 
 # Create detailed prompt
 prompt = f"""
@@ -614,10 +616,10 @@ Format your response as:
 
 ```python
 import anthropic
-from ghostbit.audiostego import get_llm_context
+from ghostbit.audiostego import get_audio_llm_context
 
 client = anthropic.Anthropic(api_key="your-api-key")
-context = get_llm_context()
+context = get_audio_llm_context()
 
 message = client.messages.create(
     model="claude-3-opus-20240229",
@@ -642,10 +644,10 @@ print(message.content[0].text)
 
 ```python
 from openai import OpenAI
-from ghostbit.audiostego import get_llm_context
+from ghostbit.audiostego import get_audio_llm_context
 
 client = OpenAI(api_key="your-api-key")
-context = get_llm_context()
+context = get_audio_llm_context()
 
 response = client.chat.completions.create(
     model="gpt-4",

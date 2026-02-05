@@ -43,10 +43,10 @@ type-strict: ## Run type checking with strict mode
 	mypy src/ghostbit/ --strict
 
 lint: ## Run linting
-	ruff check .
+	ruff check src/
 
 format: ## Format code
-	black .
+	black src/
 
 clean: ## Clean up generated files
 	rm -rf htmlcov/

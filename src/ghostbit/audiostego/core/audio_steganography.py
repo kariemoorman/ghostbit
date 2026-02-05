@@ -231,6 +231,8 @@ class WavFile:
 
     HEAD26_LENGTH = 26
     HEAD26_EXTENDED_LENGTH = 56
+    STREAM_LENGTH = 224
+    EXTENDED_STREAM_LENGTH = 276
 
     def __init__(
         self,
@@ -297,13 +299,16 @@ class WavFile:
                 if key_verif_block:
                     if self.kdf_version == 1:
                         self.head26 = bytearray(self.HEAD26_EXTENDED_LENGTH)
-                        self.head26_block = bytearray(self.file_stream.read(224))
+                        self.head26_block = bytearray(
+                            self.file_stream.read(self.EXTENDED_STREAM_LENGTH)
+                        )
                         self.head26[0:4] = b"DSC2"
                         self.head26[4] = encode_mode.value
                         self.head26[5] = 1
                         self.head26[6] = kdf_version
                         self.head26[7:23] = salt if salt else b"\x00" * 16
-                        self.head26[23:56] = key_verif_block
+                        self.head26[23] = len(key_verif_block)
+                        self.head26[24 : 24 + len(key_verif_block)] = key_verif_block
                         logger.debug(
                             "Created extended head26 with Argon2id info (43 bytes)"
                         )
@@ -411,7 +416,7 @@ class SecretFile:
         self.buff_size = buff_size // mode.value
         self.mode = mode
         self.aes_cipher = aes_cipher
-        self.file_stream = open(file_name, "rb")
+        self.file_stream: BinaryIO = open(file_name, "rb")
         self.current_block = bytearray(self.buff_size)
         self.size_last_block = 0
         self.is_last_block = False
@@ -571,6 +576,8 @@ class Coder:
     OTHER_HEAD26_TRY_FIND_LIMIT = 352800
     KDF_VERSION_LEGACY = 0
     KDF_VERSION_ARGON2ID = 1
+    STREAM_LENGTH = 224
+    EXTENDED_STREAM_LENGTH = 276
 
     def __init__(self) -> None:
         logger.debug("Coder initialized")
@@ -646,12 +653,10 @@ class Coder:
         )
 
         verification_plaintext = b"STEGO_VERIFY_2025"
-        nonce = self.salt[:12]
-
+        nonce = os.urandom(12)
         aesgcm = AESGCM(bytes(self.aes_key))
         verification_ciphertext = aesgcm.encrypt(nonce, verification_plaintext, None)
-
-        self.key_verif_block = bytearray(verification_ciphertext)
+        self.key_verif_block = bytearray(nonce + verification_ciphertext)
 
         logger.debug(f"Secure Argon2id key set (kdf_version={self.kdf_version})")
 
@@ -696,9 +701,7 @@ class Coder:
     def decode_data(self, base_data: bytes, length: int) -> bytearray:
         """Decode secret data from base data"""
         result_size = length // self.decode_quality_mode.value
-        logger.debug(
-            f"Decoding {length} bytes with {self.decode_quality_mode.name} quality -> {result_size} bytes"
-        )
+
         result = bytearray(result_size)
 
         if self.decode_quality_mode == EncodeMode.LOW_QUALITY:
@@ -961,11 +964,13 @@ class Coder:
             logger.debug("No head26 marker found in stream")
             return False
 
-        initial_buffer = bytearray(stream.read(224))
-        stream.seek(-224, 1)
+        initial_buffer = bytearray(stream.read(self.EXTENDED_STREAM_LENGTH))
+        stream.seek(-self.EXTENDED_STREAM_LENGTH, 1)
 
         self.decode_quality_mode = EncodeMode.NORMAL_QUALITY
-        initial_decoded = self.decode_data(bytes(initial_buffer), 224)
+        initial_decoded = self.decode_data(
+            bytes(initial_buffer), self.EXTENDED_STREAM_LENGTH
+        )
 
         try:
             version_str = initial_decoded[0:4].decode("ascii", errors="ignore")
@@ -989,18 +994,20 @@ class Coder:
             return False
 
         is_encrypted = encrypt_byte == 1
+        stored_key_verif: bytes
         self.decode_quality_mode = EncodeMode(quality_byte)
 
         if is_encrypted:
             kdf_version_byte = initial_decoded[6]
 
             if kdf_version_byte == self.KDF_VERSION_ARGON2ID:
-                buffer = bytearray(stream.read(224))
-                decoded = self.decode_data(bytes(buffer), 224)
+                buffer = bytearray(stream.read(self.EXTENDED_STREAM_LENGTH))
+                decoded = self.decode_data(bytes(buffer), self.EXTENDED_STREAM_LENGTH)
 
                 self.kdf_version = self.KDF_VERSION_ARGON2ID
                 self.salt = bytes(decoded[7:23])
-                stored_key_verif = bytes(decoded[23:56])
+                verif_len = decoded[23]
+                stored_key_verif = bytes(decoded[24 : 24 + verif_len])
 
                 logger.info(
                     f"Found Argon2id header: quality={self.decode_quality_mode.name}, salt={self.salt.hex()[:16]}..."
@@ -1022,7 +1029,6 @@ class Coder:
 
             self.kdf_version = self.KDF_VERSION_LEGACY
             self.salt = None
-            stored_key_verif = None
 
             logger.info(
                 f"Found unencrypted header: quality={self.decode_quality_mode.name}"
@@ -1069,7 +1075,16 @@ class Coder:
                         f"Unsupported KDF version: {self.kdf_version}"
                     )
 
-                if bytes(self.key_verif_block) != stored_key_verif:
+                raw = stored_key_verif
+                nonce = raw[:12]
+                ciphertext = raw[12:]
+                aesgcm = AESGCM(bytes(self.aes_key))
+
+                try:
+                    plaintext = aesgcm.decrypt(nonce, ciphertext, None)
+                    if plaintext != b"STEGO_VERIFY_2025":
+                        raise AudioSteganographyException("Invalid password")
+                except Exception:
                     logger.error("Password verification failed")
                     raise AudioSteganographyException("Invalid password")
 

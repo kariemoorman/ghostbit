@@ -14,22 +14,11 @@ def main() -> NoReturn:
     """Main entry point for universal GH0STB1T CLI"""
     parser = ErrorFriendlyArgumentParser(
         description=f"""{C.BOLD}{C.GRAY}
-                  ╭━━━━━━━━━━━━╮
-                ╭╯              ╰╮  
-                |                |  
-                ┃   ┏━╗    ┏━╗   ┃ 
-                ┃   ║║┃    ║┃┃   ┃         
-                ┃   ╚━┛    ╚━┛   ┃ 
-                ┃                ┃ 
-                ┃      ━──╯      ┃ 
-                ┃                ┃  
-               ╭╯                ╰╮
-               ╰━╯╰━━━╯╰━━╯╰━━━╯╰━╯ 
-             ┏━╸╻ ╻┏━┓┏━┓╺┳╸┏┓ ╺┓ ╺┳╸
-             ║╺╗║━╣║┃║╚━┓ ║ ║┻┓ ║  ║ 
-             ┗━┛╹ ╹┗━┛┗━╝ ╹ ┗━╝╺┻╸ ╹ (v{__version__})
+    ┏━╸╻ ╻┏━┓┏━┓╺┳╸┏┓ ╺┓ ╺┳╸
+    ║╺╗║━╣║┃║╚━┓ ║ ║┻┓ ║  ║ 
+    ┗━┛╹ ╹┗━┛┗━╝ ╹ ┗━╝╺┻╸ ╹ (v{__version__})
 
-        A Mᴜʟᴛɪ-Fᴏʀᴍᴀᴛ Sᴛᴇɢᴀɴᴏɢʀᴀᴘʜʏ Tᴏᴏʟᴋɪᴛ{C.RESET}
+  A Mᴜʟᴛɪ-Fᴏʀᴍᴀᴛ Sᴛᴇɢᴀɴᴏɢʀᴀᴘʜʏ Tᴏᴏʟᴋɪᴛ{C.RESET}
         """,
         formatter_class=ColorHelpFormatter,
         prog="ghostbit",
@@ -38,12 +27,15 @@ def main() -> NoReturn:
 {C.BOLD}{C.BLUE}examples:{C.RESET}
     {C.BOLD}{C.BLUE}Encode:{C.RESET}
     {C.BOLD}{C.PINK}ghostbit audio{C.RESET} {C.GREEN}encode{C.RESET} {C.GREEN}-i{C.RESET} {C.CYAN}input.wav{C.RESET} {C.GREEN}-s{C.RESET} {C.CYAN}secret.txt{C.RESET} {C.GREEN}-o{C.RESET} {C.CYAN}output.wav{C.RESET} {C.GREEN}-p{C.RESET}
+    {C.BOLD}{C.PINK}ghostbit image{C.RESET} {C.GREEN}encode{C.RESET} {C.GREEN}-i{C.RESET} {C.CYAN}photo.png{C.RESET} {C.GREEN}-s{C.RESET} {C.CYAN}secret.txt{C.RESET} {C.GREEN}-p{C.RESET}
 
     {C.BOLD}{C.BLUE}Decode:{C.RESET}
     {C.BOLD}{C.PINK}ghostbit audio{C.RESET} {C.GREEN}decode{C.RESET} {C.GREEN}-i{C.RESET} {C.CYAN}input.wav{C.RESET} {C.GREEN}-p{C.RESET}
+    {C.BOLD}{C.PINK}ghostbit image{C.RESET} {C.GREEN}decode{C.RESET} {C.GREEN}-i{C.RESET} {C.CYAN}photo.png{C.RESET} {C.GREEN}-p{C.RESET}
 
     {C.BOLD}{C.BLUE}Help (Module-Specific):{C.RESET}
     {C.BOLD}{C.PINK}ghostbit audio{C.RESET} {C.GREEN}--help{C.RESET}
+    {C.BOLD}{C.PINK}ghostbit image{C.RESET} {C.GREEN}--help{C.RESET}
   {C.RESET}
 """,
     )
@@ -54,9 +46,9 @@ def main() -> NoReturn:
 
     parser.add_argument(
         "module",
-        choices=["audio"],
+        choices=["audio", "image"],
         metavar="module",
-        help=f"{C.CYAN}Steganography module to use (e.g., audio){C.RESET}",
+        help=f"{C.CYAN}Steganography module to use (e.g., audio, image){C.RESET}",
     )
 
     parser.add_argument(
@@ -74,6 +66,13 @@ def main() -> NoReturn:
         sys.argv = sys.argv[:1]
         sys.argv = ["ghostbit audio"] + args.module_args
         audio_main()
+
+    elif args.module == "image":
+        from ghostbit.imagestego.cli.imagestego_cli import main as image_main
+
+        sys.argv = ["ghostbit image"] + args.module_args
+        image_main()
+
     else:
         parser.print_help()
 

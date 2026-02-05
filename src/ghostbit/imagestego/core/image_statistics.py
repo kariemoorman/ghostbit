@@ -191,7 +191,8 @@ class StatisticalAnalysis:
         try:
             logger.debug("Calculating pixel_chi_square")
 
-            pixels = np.array(frame.getdata(), dtype=np.uint8).flatten()
+            pixels = np.array(frame.get_flattened_data(), dtype=np.uint8)
+
             logger.debug(f"Analyzing {len(pixels)} pixels")
 
             pairs = []
@@ -240,7 +241,11 @@ class StatisticalAnalysis:
                 k: stego_stats[k] - cover_stats[k] for k in cover_stats.keys()
             }
 
-            results: Dict[str, Any] = {"cover": cover_stats, "stego": stego_stats, "delta": delta_stats}
+            results: Dict[str, Any] = {
+                "cover": cover_stats,
+                "stego": stego_stats,
+                "delta": delta_stats,
+            }
 
             logger.info(
                 f"LSB chi-square delta complete: avg_delta={delta_stats['average']:.4f}"
@@ -340,7 +345,9 @@ class StatisticalAnalysis:
             )
 
     @staticmethod
-    def gif_chi_square_delta(cover_path: str, stego_path: str) -> Dict[str, Union[List[float], float]]:
+    def gif_chi_square_delta(
+        cover_path: str, stego_path: str
+    ) -> Dict[str, Union[List[float], float]]:
         """
         Compute frame-by-frame chi-square delta for GIFs (palette & pixel).
         """
@@ -357,14 +364,22 @@ class StatisticalAnalysis:
             stego_pixel_raw = stego_stats["frames_pixel"]
             cover_palette_raw = cover_stats["frames_palette"]
             stego_palette_raw = stego_stats["frames_palette"]
-            
+
             # Type narrowing: ensure we have lists
-            if not isinstance(cover_pixel_raw, list) or not isinstance(stego_pixel_raw, list):
-                raise ImageStatisticsException("Invalid chi-square results: frames_pixel must be a list")
-            
-            if not isinstance(cover_palette_raw, list) or not isinstance(stego_palette_raw, list):
-                raise ImageStatisticsException("Invalid chi-square results: frames_palette must be a list")
-            
+            if not isinstance(cover_pixel_raw, list) or not isinstance(
+                stego_pixel_raw, list
+            ):
+                raise ImageStatisticsException(
+                    "Invalid chi-square results: frames_pixel must be a list"
+                )
+
+            if not isinstance(cover_palette_raw, list) or not isinstance(
+                stego_palette_raw, list
+            ):
+                raise ImageStatisticsException(
+                    "Invalid chi-square results: frames_palette must be a list"
+                )
+
             cover_pixel: List[float] = cover_pixel_raw
             stego_pixel: List[float] = stego_pixel_raw
             cover_palette: List[float] = cover_palette_raw
@@ -385,10 +400,7 @@ class StatisticalAnalysis:
                     "delta_palette_max_abs": 0.0,
                 }
 
-            delta_pixel = [
-                stego_pixel[i] - cover_pixel[i]
-                for i in range(n_frames)
-            ]
+            delta_pixel = [stego_pixel[i] - cover_pixel[i] for i in range(n_frames)]
 
             delta_palette = [
                 stego_palette[i] - cover_palette[i]
@@ -422,6 +434,7 @@ class StatisticalAnalysis:
             raise ImageStatisticsException(
                 f"Failed to calculate GIF chi-square delta: {e}"
             )
+
     # @staticmethod
     # def gif_chi_square_delta(cover_path: str, stego_path: str) -> Dict[str, Union[List[float], float]]:
     #     """
@@ -516,7 +529,9 @@ class StatisticalAnalysis:
                         gif.seek(frame_idx)
 
                         if gif.mode != "P":
-                            frame = gif.convert("P", palette=Image.Palette.ADAPTIVE, colors=256)
+                            frame = gif.convert(
+                                "P", palette=Image.Palette.ADAPTIVE, colors=256
+                            )
                         else:
                             frame = gif.copy()
 
@@ -574,7 +589,9 @@ class StatisticalAnalysis:
             raise ImageStatisticsException(f"Failed to calculate GIF chi-square: {e}")
 
     @staticmethod
-    def gif_calculate_mse(original_path: str, stego_path: str) -> Dict[str, Union[float, List[float]]]:
+    def gif_calculate_mse(
+        original_path: str, stego_path: str
+    ) -> Dict[str, Union[float, List[float]]]:
         """
         Calculate MSE (Mean Squared Error) per frame and average for a GIF.
         """
@@ -629,13 +646,15 @@ class StatisticalAnalysis:
                 return results
 
         except FileNotFoundError:
-            raise ImageStatisticsException('File not found')
+            raise ImageStatisticsException("File not found")
         except Exception as e:
             logger.error(f"Error calculating gif_calculate_mse: {e}")
             raise ImageStatisticsException(f"Failed to calculate GIF MSE: {e}")
 
     @staticmethod
-    def gif_calculate_psnr(original_path: str, stego_path: str) -> Dict[str, Union[str, float, List[float]]]:
+    def gif_calculate_psnr(
+        original_path: str, stego_path: str
+    ) -> Dict[str, Union[str, float, List[float]]]:
         """
         Calculate PSNR (Peak Signal-to-Noise Ratio) per frame and average for a GIF.
         """
@@ -646,10 +665,10 @@ class StatisticalAnalysis:
                 original_path, stego_path
             )
             mse_per_frame = mse_results["mse_per_frame"]
-            
+
             if not isinstance(mse_per_frame, list):
                 raise ImageStatisticsException("Invalid MSE results")
-            
+
             psnr_list: List[float] = []
 
             for idx, mse in enumerate(mse_per_frame):
@@ -841,7 +860,9 @@ class StatisticalAnalysis:
             )
 
     @staticmethod
-    def svg_calculate_pattern_delta(origin_path: str, stego_path: str) -> Dict[str, int]:
+    def svg_calculate_pattern_delta(
+        origin_path: str, stego_path: str
+    ) -> Dict[str, int]:
         """Calculate delta in SVG element patterns"""
         try:
             logger.info(f"Calculating SVG pattern delta: {origin_path} vs {stego_path}")
@@ -898,7 +919,9 @@ class StatisticalAnalysis:
             raise ImageStatisticsException(f"Failed to calculate SVG elements: {e}")
 
     @staticmethod
-    def svg_calculate_numeric_stats(file_path: str) -> Dict[str, Union[int, float, None]]:
+    def svg_calculate_numeric_stats(
+        file_path: str,
+    ) -> Dict[str, Union[int, float, None]]:
         """Calculate statistics on numeric values in SVG attributes"""
         try:
             logger.debug(f"Calculating SVG numeric stats: {file_path}")
@@ -923,7 +946,7 @@ class StatisticalAnalysis:
             variance: Union[float, None]
             min_val: Union[float, None]
             max_val: Union[float, None]
-            
+
             if numeric_values:
                 mean_val = sum(numeric_values) / len(numeric_values)
                 variance = sum((x - mean_val) ** 2 for x in numeric_values) / len(
@@ -960,7 +983,9 @@ class StatisticalAnalysis:
             )
 
     @staticmethod
-    def svg_calculate_numeric_stats_delta(origin_path: str, stego_path: str) -> Dict[str, Union[int, float, None]]:
+    def svg_calculate_numeric_stats_delta(
+        origin_path: str, stego_path: str
+    ) -> Dict[str, Union[int, float, None]]:
         """Calculate SVG numeric stats delta"""
         try:
             logger.info(
@@ -976,7 +1001,9 @@ class StatisticalAnalysis:
 
                 if origin_val is None or stego_val is None:
                     delta[key] = None
-                elif isinstance(origin_val, (int, float)) and isinstance(stego_val, (int, float)):
+                elif isinstance(origin_val, (int, float)) and isinstance(
+                    stego_val, (int, float)
+                ):
                     delta[key] = stego_val - origin_val
                 else:
                     delta[key] = None

@@ -4,7 +4,7 @@ import sys
 import struct
 import logging
 from PIL import Image
-from typing import Optional, List, Dict, Tuple, Union, TypedDict, Any, cast
+from typing import Optional, List, Dict, Union, TypedDict, Any
 
 from ghostbit.imagestego.core.image_statistics import (
     StatisticalAnalysis,
@@ -35,6 +35,7 @@ class CapacityResult(TypedDict):
     capacity_bytes: int
     capacity_kb: float
     capacity_mb: float
+
 
 class AnalysisResult(TypedDict):
     has_hidden_data: bool
@@ -106,10 +107,12 @@ class ImageMultiFormatCoder(BaseStego):
         try:
             stego = self.algorithms[algorithm]
 
-            if hasattr(stego, 'get_capacity'):
+            if hasattr(stego, "get_capacity"):
                 capacity = stego.get_capacity(image_path)
             else:
-                raise ImageSteganographyException(f"Algorithm {algorithm.name} does not support capacity calculation")
+                raise ImageSteganographyException(
+                    f"Algorithm {algorithm.name} does not support capacity calculation"
+                )
 
             result["capacity_bytes"] = capacity
             result["capacity_kb"] = capacity / 1024
@@ -146,16 +149,20 @@ class ImageMultiFormatCoder(BaseStego):
 
                 if not isinstance(chi_stats, dict):
                     raise ImageStatisticsException("Invalid chi_stats format")
-                
+
                 avg_palette = chi_stats.get("average_palette")
                 avg_pixel = chi_stats.get("average_pixel")
                 frames_palette = chi_stats.get("frames_palette")
                 frames_pixel = chi_stats.get("frames_pixel")
-                
-                if not isinstance(avg_palette, (int, float)) or not isinstance(avg_pixel, (int, float)):
+
+                if not isinstance(avg_palette, (int, float)) or not isinstance(
+                    avg_pixel, (int, float)
+                ):
                     raise ImageStatisticsException("Invalid average values")
-                
-                if not isinstance(frames_palette, list) or not isinstance(frames_pixel, list):
+
+                if not isinstance(frames_palette, list) or not isinstance(
+                    frames_pixel, list
+                ):
                     raise ImageStatisticsException("Invalid frames data")
 
                 print(
@@ -193,11 +200,13 @@ class ImageMultiFormatCoder(BaseStego):
                 entropy = stats["entropy"]
                 suspicious_patterns = stats["suspicious_patterns"]
                 numerical_stats = stats["numeric_stats"]
-                
+
                 if not isinstance(entropy, (int, float)):
                     raise ImageStatisticsException("Invalid entropy value")
-                
-                if not isinstance(suspicious_patterns, dict) or not isinstance(numerical_stats, dict):
+
+                if not isinstance(suspicious_patterns, dict) or not isinstance(
+                    numerical_stats, dict
+                ):
                     raise ImageStatisticsException("Invalid stats format")
 
                 mean_val = numerical_stats.get("mean")
@@ -213,12 +222,22 @@ class ImageMultiFormatCoder(BaseStego):
                 print(
                     f"  • Suspicious Patterns: { {k: v for k, v in suspicious_patterns.items() if v > 0} or 'None'}"
                 )
-                
-                mean_str = f"{mean_val:.2f}" if isinstance(mean_val, (int, float)) else "N/A"
-                var_str = f"{variance_val:.2f}" if isinstance(variance_val, (int, float)) else "N/A"
-                min_str = f"{min_val:.2f}" if isinstance(min_val, (int, float)) else "N/A"
-                max_str = f"{max_val:.2f}" if isinstance(max_val, (int, float)) else "N/A"
-                
+
+                mean_str = (
+                    f"{mean_val:.2f}" if isinstance(mean_val, (int, float)) else "N/A"
+                )
+                var_str = (
+                    f"{variance_val:.2f}"
+                    if isinstance(variance_val, (int, float))
+                    else "N/A"
+                )
+                min_str = (
+                    f"{min_val:.2f}" if isinstance(min_val, (int, float)) else "N/A"
+                )
+                max_str = (
+                    f"{max_val:.2f}" if isinstance(max_val, (int, float)) else "N/A"
+                )
+
                 print(
                     f"  • Numerical Stats: count={count_val}, "
                     f"mean={mean_str}, variance={var_str}, "
@@ -250,25 +269,33 @@ class ImageMultiFormatCoder(BaseStego):
                 stego = self.algorithms[algorithm]
                 if algorithm.name != "LSB":
                     if not isinstance(stego, (PaletteStego, SVGStego)):
-                        raise ImageSteganographyException("Expected PaletteStego or SVGStego instance")
-                    if hasattr(stego, 'decode'):
+                        raise ImageSteganographyException(
+                            "Expected PaletteStego or SVGStego instance"
+                        )
+                    if hasattr(stego, "decode"):
                         payload = stego.decode(image_path)
                     else:
-                        raise ImageSteganographyException(f"Algorithm {algorithm.name} does not support decoding")
+                        raise ImageSteganographyException(
+                            f"Algorithm {algorithm.name} does not support decoding"
+                        )
                 else:
                     if not isinstance(stego, LSBStego):
                         raise ImageSteganographyException("Expected LSBStego instance")
-                    if hasattr(stego, 'decode'):
+                    if hasattr(stego, "decode"):
                         payload = stego.decode(image_path, 8)
                     else:
-                        raise ImageSteganographyException(f"Algorithm {algorithm.name} does not support decoding")
+                        raise ImageSteganographyException(
+                            f"Algorithm {algorithm.name} does not support decoding"
+                        )
 
-                magic = payload[:4]
-
-                if magic == self.MAGIC:
-                    result["has_hidden_data"] = True
-                    result["algorithm"] = Algorithm(payload[5])
-                    result["encrypted"] = bool(payload[6])
+                if not payload:
+                    result["has_hidden_data"] = False
+                else:
+                    magic = payload[:4]
+                    if magic == self.MAGIC:
+                        result["has_hidden_data"] = True
+                        result["algorithm"] = Algorithm(payload[5])
+                        result["encrypted"] = bool(payload[6])
 
         except Exception as e:
             logger.debug(f"Error detecting hidden data: {e}")
@@ -294,29 +321,31 @@ class ImageMultiFormatCoder(BaseStego):
                 entropy_delta = self.stats.gif_entropy_delta(
                     original_filepath, stego_filepath
                 )
-                
+
                 delta_pixel_avg = chi_stats_delta.get("delta_pixel_average")
                 delta_palette_avg = chi_stats_delta.get("delta_palette_average")
                 delta_palette_frames = chi_stats_delta.get("delta_palette_per_frame")
                 max_abs_entropy = entropy_delta.get("max_abs")
                 psnr_avg = psnr.get("psnr_average")
                 mse_avg = mse.get("mse_average")
-                
-                if not isinstance(delta_pixel_avg, (int, float)) or not isinstance(delta_palette_avg, (int, float)):
+
+                if not isinstance(delta_pixel_avg, (int, float)) or not isinstance(
+                    delta_palette_avg, (int, float)
+                ):
                     raise ImageStatisticsException("Invalid chi-square delta values")
-                
+
                 if not isinstance(delta_palette_frames, list):
                     raise ImageStatisticsException("Invalid palette frames data")
-                    
+
                 if not isinstance(max_abs_entropy, (int, float)):
                     raise ImageStatisticsException("Invalid entropy delta")
-                    
+
                 if not isinstance(psnr_avg, (int, float)):
                     raise ImageStatisticsException("Invalid PSNR value")
-                    
+
                 if not isinstance(mse_avg, (int, float)):
                     raise ImageStatisticsException("Invalid MSE value")
-                
+
                 print(
                     f"  • 𝚫 Chi-Square (avg): Pixel - {delta_pixel_avg:.4f} {'(Excellent - imperceptible)' if delta_pixel_avg < 1 else '(Moderate risk)' if delta_pixel_avg < 10 else '(High risk)'}"
                     f", Palette - {delta_palette_avg:.4f} {'(Excellent - imperceptible)' if delta_palette_avg < 100 else '(Moderate risk)' if delta_palette_avg < 300 else '(High risk)'}"
@@ -344,20 +373,22 @@ class ImageMultiFormatCoder(BaseStego):
 
                 if not isinstance(entropy, (int, float)):
                     raise ImageStatisticsException("Invalid entropy")
-                
-                if not isinstance(suspicious_patterns, dict) or not isinstance(numerical_stats, dict):
+
+                if not isinstance(suspicious_patterns, dict) or not isinstance(
+                    numerical_stats, dict
+                ):
                     raise ImageStatisticsException("Invalid stats")
-                    
+
                 if not isinstance(delta, dict):
                     raise ImageStatisticsException("Invalid delta")
-                
+
                 entropy_delta_val = delta.get("entropy_bytes_delta")
                 if not isinstance(entropy_delta_val, (int, float)):
                     raise ImageStatisticsException("Invalid entropy delta")
 
                 susp_delta = delta.get("suspicious_patterns_delta", {})
                 num_delta = delta.get("numeric_stats_delta", {})
-                
+
                 if not isinstance(num_delta, dict):
                     raise ImageStatisticsException("Invalid numeric delta")
 
@@ -369,29 +400,37 @@ class ImageMultiFormatCoder(BaseStego):
                     f"  • Suspicious Patterns: { {k: v for k, v in suspicious_patterns.items() if v > 0} or 'None'}"
                     f"\n    • 𝚫 Suspicious Patterns: {susp_delta}"
                 )
-                
+
                 count = numerical_stats.get("count", 0)
                 mean = numerical_stats.get("mean")
                 variance = numerical_stats.get("variance")
                 min_v = numerical_stats.get("min")
                 max_v = numerical_stats.get("max")
-                
+
                 d_count = num_delta.get("count", 0)
                 d_mean = num_delta.get("mean")
                 d_variance = num_delta.get("variance")
                 d_min = num_delta.get("min")
                 d_max = num_delta.get("max")
-                
+
                 mean_str = f"{mean:.2f}" if isinstance(mean, (int, float)) else "N/A"
-                var_str = f"{variance:.2f}" if isinstance(variance, (int, float)) else "N/A"
+                var_str = (
+                    f"{variance:.2f}" if isinstance(variance, (int, float)) else "N/A"
+                )
                 min_str = f"{min_v:.2f}" if isinstance(min_v, (int, float)) else "N/A"
                 max_str = f"{max_v:.2f}" if isinstance(max_v, (int, float)) else "N/A"
-                
-                d_mean_str = f"{d_mean:.2f}" if isinstance(d_mean, (int, float)) else "N/A"
-                d_var_str = f"{d_variance:.2f}" if isinstance(d_variance, (int, float)) else "N/A"
+
+                d_mean_str = (
+                    f"{d_mean:.2f}" if isinstance(d_mean, (int, float)) else "N/A"
+                )
+                d_var_str = (
+                    f"{d_variance:.2f}"
+                    if isinstance(d_variance, (int, float))
+                    else "N/A"
+                )
                 d_min_str = f"{d_min:.2f}" if isinstance(d_min, (int, float)) else "N/A"
                 d_max_str = f"{d_max:.2f}" if isinstance(d_max, (int, float)) else "N/A"
-                
+
                 print(
                     f"  • Stats: count={count}, mean={mean_str}, variance={var_str}, min={min_str}, max={max_str}"
                     f"\n    • 𝚫 Stats: count={d_count}, mean={d_mean_str}, variance={d_var_str}, min={d_min_str}, max={d_max_str}"
@@ -400,8 +439,10 @@ class ImageMultiFormatCoder(BaseStego):
                 pass
             else:
                 if not isinstance(stego_image, Image.Image):
-                    raise ImageStatisticsException("Invalid stego_image type for LSB statistics")
-                    
+                    raise ImageStatisticsException(
+                        "Invalid stego_image type for LSB statistics"
+                    )
+
                 psnr_val = self.stats.lsb_calculate_psnr(original_filepath, stego_image)
                 mse_val = self.stats.lsb_calculate_mse(original_filepath, stego_image)
                 hist_diff = self.stats.lsb_calculate_histogram_difference(
@@ -410,17 +451,19 @@ class ImageMultiFormatCoder(BaseStego):
                 chi_stats_delta = self.stats.lsb_chi_square_delta(
                     original_filepath, stego_filepath
                 )
-                
+
                 delta_dict = chi_stats_delta.get("delta")
                 if not isinstance(delta_dict, dict):
                     raise ImageStatisticsException("Invalid delta stats")
-                
+
                 chi_avg = delta_dict.get("average", 0.0)
                 chi_med = delta_dict.get("median", 0.0)
-                
-                if not isinstance(chi_avg, (int, float)) or not isinstance(chi_med, (int, float)):
+
+                if not isinstance(chi_avg, (int, float)) or not isinstance(
+                    chi_med, (int, float)
+                ):
                     raise ImageStatisticsException("Invalid chi values")
-                
+
                 risk_level = (
                     "No"
                     if -100 < chi_avg < 10
@@ -436,7 +479,7 @@ class ImageMultiFormatCoder(BaseStego):
                 )
                 for channel in ["R", "G", "B"]:
                     chi_val = delta_dict.get(channel, 0.0)
-                    
+
                     if not isinstance(chi_val, (int, float)):
                         continue
 
@@ -468,7 +511,7 @@ class ImageMultiFormatCoder(BaseStego):
                 print(
                     f"  • MSE: {mse_val:.4f} {'(Excellent - imperceptible)' if mse_val < 1 else '(Good)' if mse_val < 10 else '(Detectable)'}"
                 )
-                
+
                 avg_hist = hist_diff.get("average", 0.0)
                 if isinstance(avg_hist, (int, float)):
                     print(
@@ -540,11 +583,13 @@ class ImageMultiFormatCoder(BaseStego):
         payload = stego.build_payload(secret_files_info_items, algorithm, password)
 
         logger.info("Calculating image capacity statistics")
-        if hasattr(stego, 'get_capacity'):
+        if hasattr(stego, "get_capacity"):
             capacity = stego.get_capacity(cover_path)
         else:
-            raise ImageSteganographyException(f"Algorithm {algorithm.name} does not support capacity calculation")
-            
+            raise ImageSteganographyException(
+                f"Algorithm {algorithm.name} does not support capacity calculation"
+            )
+
         capacity_remaining = capacity - len(payload)
         capacity_percent = (len(payload) / capacity) * 100
 
@@ -560,10 +605,12 @@ class ImageMultiFormatCoder(BaseStego):
             logger.info(f"Processing {format} format")
             print("\n🔄 Encoding Secret Files...")
 
-            if hasattr(stego, 'encode'):
+            if hasattr(stego, "encode"):
                 stego_result = stego.encode(cover_path, payload)
             else:
-                raise ImageSteganographyException(f"Algorithm {algorithm.name} does not support encoding")
+                raise ImageSteganographyException(
+                    f"Algorithm {algorithm.name} does not support encoding"
+                )
 
             print(f"  ✓ Successfully hidden {len(payload):,} bytes")
             print("\n🔄 Creating Final Output...")
@@ -579,7 +626,7 @@ class ImageMultiFormatCoder(BaseStego):
             elif format == "GIF":
                 if not isinstance(stego_result, list):
                     raise ImageSteganographyException("Invalid GIF result type")
-                    
+
                 with Image.open(cover_path) as orig_gif:
                     n_frames = getattr(orig_gif, "n_frames", 1)
                     is_animated = n_frames > 1
@@ -626,13 +673,13 @@ class ImageMultiFormatCoder(BaseStego):
                             output_filepath, save_all=True, format="GIF", optimize=False
                         )
                         logger.info("Saved static GIF")
-                
+
                 stego_image = stego_result
 
             else:
                 if not isinstance(stego_result, Image.Image):
                     raise ImageSteganographyException("Invalid image result type")
-                    
+
                 save_kwargs: Dict[str, Any] = {}
                 if format == "PNG":
                     save_kwargs = {"optimize": True}
@@ -686,14 +733,6 @@ class ImageMultiFormatCoder(BaseStego):
             format = self.detect_format(stego_path)
             algorithm = self.select_algorithm(format)
             stego = self.algorithms[algorithm]
-            if algorithm:
-                print("  😎 Hidden Data Found!")
-                print(f"   • Algorithm detected: {algorithm.name}")
-            else:
-                logger.info("No hidden data found in file")
-                print("\n   😖 No hidden data found")
-                print("\n✅ Decoding Complete!")
-                return 0
         except Exception as e:
             raise ImageSteganographyException(f"Error detecting algorithm: {e}")
 
@@ -701,13 +740,26 @@ class ImageMultiFormatCoder(BaseStego):
             logger.info(f"Processing {format} format")
             if algorithm.name not in ["LSB"]:
                 if not isinstance(stego, (PaletteStego, SVGStego)):
-                    raise ImageSteganographyException("Expected PaletteStego or SVGStego instance")
-            
-                if hasattr(stego, 'decode'):
+                    raise ImageSteganographyException(
+                        "Expected PaletteStego or SVGStego instance"
+                    )
+
+                if hasattr(stego, "decode"):
                     payload = stego.decode(stego_path)
+                    if not payload:
+                        logger.info("No hidden data found in file")
+                        print("   😖 No hidden data found")
+                        print("\n✅ Decoding Complete!\n")
+                        return 0
+                    else:
+                        logger.info("Hidden data found in file")
+                        print("  😎 Hidden Data Found!")
+                        print(f"   • Algorithm detected: {algorithm.name}")
                 else:
-                    raise ImageSteganographyException(f"Algorithm {algorithm.name} does not support decoding")
-                    
+                    raise ImageSteganographyException(
+                        f"Algorithm {algorithm.name} does not support decoding"
+                    )
+
                 try:
                     extracted_files, algorithm = stego.parse_payload(payload, password)
                 except ImageSteganographyException as e:
@@ -715,8 +767,10 @@ class ImageMultiFormatCoder(BaseStego):
                     return 1
 
             else:
-                if not hasattr(stego, 'decode'):
-                    raise ImageSteganographyException(f"Algorithm {algorithm.name} does not support decoding")
+                if not hasattr(stego, "decode"):
+                    raise ImageSteganographyException(
+                        f"Algorithm {algorithm.name} does not support decoding"
+                    )
                 if not isinstance(stego, LSBStego):
                     raise ImageSteganographyException("Expected LSBStego instance")
                 logger.info("Reading payload header (8 bytes)")
@@ -724,8 +778,14 @@ class ImageMultiFormatCoder(BaseStego):
                 logger.debug(f"Header data: {header_data.hex()}")
 
                 if header_data[:4] != self.MAGIC:
-                    raise ImageSteganographyException("No hidden data found in image")
-
+                    logger.debug("No hidden data found in image")
+                    print("   😖 No hidden data found")
+                    print("\n✅ Decoding Complete!\n")
+                    return 0
+                else:
+                    logger.info("Hidden data found in file")
+                    print("  😎 Hidden Data Found!")
+                    print(f"   • Algorithm detected: {algorithm.name}")
                 algorithm = Algorithm(header_data[5])
                 encrypted = header_data[6]
 
@@ -757,11 +817,13 @@ class ImageMultiFormatCoder(BaseStego):
                     logger.debug(f"Created directory: {output_file_dir}")
                 print("\n🔄 Extracting Hidden Files...")
                 print(f"  • Output Directory: '{os.path.dirname(output_path)}'")
-                
+
                 file_data = file_info.file_data
                 if file_data is None:
-                    raise ImageSteganographyException(f"No data found for file {file_info.file_name}")
-                    
+                    raise ImageSteganographyException(
+                        f"No data found for file {file_info.file_name}"
+                    )
+
                 with open(output_path, "wb") as f:
                     f.write(file_data)
 

@@ -20,6 +20,8 @@ logger = logging.getLogger("ghostbit.imagestego")
 
 class ImageStegoCLI:
 
+    PERMITTED = ["jpg", "jpeg", "webp", "bmp", "png", "svg", "tiff", "gif"]
+
     def __init__(self, verbose: bool = False):
         self.verbose = verbose
         logger.info("ImageStegoCLI initialized")
@@ -44,6 +46,14 @@ class ImageStegoCLI:
         logger.debug(
             f"Parameters: carrier={input_file}, secrets={secret_files}, password={'set' if file_password else 'none'}"
         )
+
+        if not os.path.exists(input_file):
+            raise FileNotFoundError(f"Cover image not found: {input_file}")
+
+        file_format = os.path.splitext(input_file)[1].lstrip(".")
+
+        if file_format not in self.PERMITTED:
+            raise ImageMultiFormatCoderException("File format not supported")
 
         password = None
         if not file_password:
@@ -90,6 +100,14 @@ class ImageStegoCLI:
             f"Parameters: carrier={input_file}, output_dir={output_dir}, password={'set' if file_password else 'none'}"
         )
 
+        if not os.path.exists(input_file):
+            raise FileNotFoundError(f"Cover image not found: {input_file}")
+
+        file_format = os.path.splitext(input_file)[1].lstrip(".")
+
+        if file_format not in self.PERMITTED:
+            raise ImageMultiFormatCoderException("File format not supported")
+
         password = None
         if file_password == "prompt":
             password = getpass("Enter decryption password: ")
@@ -115,6 +133,15 @@ class ImageStegoCLI:
 
     def capacity_command(self, input_file: str) -> Optional[int]:
         """Handle capacity command"""
+
+        if not os.path.exists(input_file):
+            raise FileNotFoundError(f"Image not found: {input_file}")
+
+        file_format = os.path.splitext(input_file)[1].lstrip(".")
+
+        if file_format not in self.PERMITTED:
+            raise ImageMultiFormatCoderException("File format not supported")
+
         try:
             self._print_header("Calculating Capacity", "🧮")
             stego = ImageMultiFormatCoder()
@@ -139,6 +166,15 @@ class ImageStegoCLI:
         input_file: str,
     ) -> Optional[int]:
         """Handle analyze command"""
+
+        if not os.path.exists(input_file):
+            raise FileNotFoundError(f"Image not found: {input_file}")
+
+        file_format = os.path.splitext(input_file)[1].lstrip(".")
+
+        if file_format not in self.PERMITTED:
+            raise ImageMultiFormatCoderException("File format not supported")
+
         try:
             self._print_header("Analyzing File", "🔍")
 
@@ -328,6 +364,7 @@ def main():
     )
 
     args = parser.parse_args()
+
     if not getattr(args, "subparser_command", None):
         print(f"\n{C.RED}❌ Error: No command provided!{C.RESET}\n")
         parser.print_help()

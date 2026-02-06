@@ -49,6 +49,9 @@ This implementation represents a complete architectural migration from platform-
 
 These improvements reduce deployment complexity and computational overhead, facilitating reliable and efficient operation in resource-constrained environments for both human operators and automated LLM-driven workflows.
 
+(see also [EFF Coders' Rights Project Reverse Engineering FAQ](https://www.eff.org/issues/coders/reverse-engineering-faq#faq5))
+
+
 </details>
 
 <details>
@@ -80,8 +83,9 @@ This implementation pairs existing steganography protocols with modern, audited 
 **Tamper Detection & Integrity Verification**
 - Legacy AES-CBC allows for undetected tampering, bit-flipping attacks, and payload manipulation. AES-GCM cryptographically authenticates every byte of hidden data. Any modification (e.g., a single bit flip) causes immediate decryption failure. It is now mathematically impossible to alter data without detection.
 
-**Eliminates Padding Oracle Vulnerabilities**
+**Elimination of Padding Oracle Vulnerabilities**
 - Legacy AES-CBC with PKCS#7 padding is vulnerable to adaptive chosen-ciphertext attacks. Attackers can decrypt data without the password by observing error messages. AES-GCM uses authenticated encryption: no padding, no oracle, constant-time failure.
+
 
 </details>
 

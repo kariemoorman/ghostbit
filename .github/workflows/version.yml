@@ -101,7 +101,7 @@ jobs:
         if: steps.detect.outputs.bump == 'true'
         id: open_pr
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           gh pr create \
             --base main \

@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 import os
 import sys
+import time
 import struct
 import logging
+import svgwrite
+import numpy as np
 from PIL import Image
 from typing import Optional, List, Dict, Union, TypedDict, Any
 
@@ -25,6 +28,12 @@ logger = logging.getLogger("ghostbit.imagestego")
 
 class ImageMultiFormatCoderException(Exception):
     """Base exception for steganography operations"""
+
+    pass
+
+
+class ImageTestCreationException(Exception):
+    """Base exception for image test file creation operations"""
 
     pass
 
@@ -136,8 +145,8 @@ class ImageMultiFormatCoder(BaseStego):
             "encrypted": None,
         }
 
-        print(f"📁 Input File: '{os.path.basename(image_path)}'")
-        print(f"  • Format: {format}")
+        print(f"   Input File: '{os.path.basename(image_path)}'")
+        print(f"   • Format: {format}")
 
         print("\n📊 Statistical Analysis:")
 
@@ -166,10 +175,10 @@ class ImageMultiFormatCoder(BaseStego):
                     raise ImageStatisticsException("Invalid frames data")
 
                 print(
-                    f"  • Chi-Square (avg): Palette - {avg_palette:.2f} {'(Low detection risk)' if avg_palette < 100 else '(Moderate detection risk)' if avg_palette < 300 else '(High detection risk)'}"
+                    f"   • Chi-Square (avg): Palette - {avg_palette:.2f} {'(Low detection risk)' if avg_palette < 100 else '(Moderate detection risk)' if avg_palette < 300 else '(High detection risk)'}"
                     f", Pixel - {avg_pixel:.4f} {'(Low detection risk)' if avg_pixel < .1 else '(Moderate detection risk)' if avg_pixel < .3 else '(High detection risk)'}"
                 )
-                print("  • Chi-Square (per frame):")
+                print("   • Chi-Square (per frame):")
                 for idx, chi in enumerate(frames_palette):
                     palette_risk = (
                         "(High detection risk)"
@@ -191,9 +200,9 @@ class ImageMultiFormatCoder(BaseStego):
                         )
                     )
                     print(
-                        f"    • Frame {idx}: Palette - {chi:.2f} {palette_risk}, Pixel - {pixel_chi:.4f} {pixel_risk}"
+                        f"     • Frame {idx}: Palette - {chi:.2f} {palette_risk}, Pixel - {pixel_chi:.4f} {pixel_risk}"
                     )
-                print(f"  • Entropy: Palette - {entropy_stats}")
+                print(f"   • Entropy: Palette - {entropy_stats}")
 
             elif format == "SVG":
                 stats = self.stats.analyze_svg(image_path)
@@ -216,11 +225,11 @@ class ImageMultiFormatCoder(BaseStego):
                 count_val = numerical_stats.get("count")
 
                 print(
-                    f"  • Entropy: {entropy:.6f} bits per byte "
+                    f"   • Entropy: {entropy:.6f} bits per byte "
                     f"{'(Low)' if entropy < 4 else '(Medium)' if entropy < 6 else '(High - suspicious)'}"
                 )
                 print(
-                    f"  • Suspicious Patterns: { {k: v for k, v in suspicious_patterns.items() if v > 0} or 'None'}"
+                    f"   • Suspicious Patterns: { {k: v for k, v in suspicious_patterns.items() if v > 0} or 'None'}"
                 )
 
                 mean_str = (
@@ -239,7 +248,7 @@ class ImageMultiFormatCoder(BaseStego):
                 )
 
                 print(
-                    f"  • Numerical Stats: count={count_val}, "
+                    f"   • Numerical Stats: count={count_val}, "
                     f"mean={mean_str}, variance={var_str}, "
                     f"min={min_str}, max={max_str}"
                 )
@@ -251,11 +260,11 @@ class ImageMultiFormatCoder(BaseStego):
                     "Low" if chi_avg < 100 else "Moderate" if chi_avg < 300 else "High"
                 )
                 print(
-                    f"  • Chi-Square Average: {chi_avg:.2f} ({risk_level} detection risk)"
+                    f"   • Chi-Square Average: {chi_avg:.2f} ({risk_level} detection risk)"
                 )
-                print(f"    • Chi-Square R: {chi_stats['R']:.2f}")
-                print(f"    • Chi-Square G: {chi_stats['G']:.2f}")
-                print(f"    • Chi-Square B: {chi_stats['B']:.2f}")
+                print(f"     • Chi-Square R: {chi_stats['R']:.2f}")
+                print(f"     • Chi-Square G: {chi_stats['G']:.2f}")
+                print(f"     • Chi-Square B: {chi_stats['B']:.2f}")
 
         except Exception as e:
             logger.debug(f"Could not perform statistical analysis: {e}")
@@ -539,8 +548,8 @@ class ImageMultiFormatCoder(BaseStego):
         algorithm = self.select_algorithm(format)
         stego = self.algorithms[algorithm]
 
-        print(f"  • File Format: {format}")
-        print(f"  • Algorithm Selected: {algorithm.name}")
+        print(f"   • File Format: {format}")
+        print(f"   • Algorithm Selected: {algorithm.name}")
 
         secret_files_info_items: List[SecretFileInfoItem] = []
         for secret_file in secret_files:
@@ -554,7 +563,7 @@ class ImageMultiFormatCoder(BaseStego):
             logger.info(
                 f"Added secret file: '{info.file_name}' ({info.file_size} bytes)"
             )
-            print(f"  • File: '{info.file_name}' ({info.file_size_mb})")
+            print(f"   • File: '{info.file_name}' ({info.file_size_mb})")
 
         if output_dir:
             logger.debug(f"Creating output directory: {output_dir}")
@@ -603,7 +612,7 @@ class ImageMultiFormatCoder(BaseStego):
 
         try:
             logger.info(f"Processing {format} format")
-            print("\n🔄 Encoding Secret Files...")
+            print("🔄 Encoding Secret Files...")
 
             if hasattr(stego, "encode"):
                 stego_result = stego.encode(cover_path, payload)
@@ -612,9 +621,9 @@ class ImageMultiFormatCoder(BaseStego):
                     f"Algorithm {algorithm.name} does not support encoding"
                 )
 
-            print(f"  ✓ Successfully hidden {len(payload):,} bytes")
+            print(f"   ✓ Successfully hidden {len(payload):,} bytes")
             print("\n🔄 Creating Final Output...")
-            print(f"  • Output File: '{output_filepath}'")
+            print(f"   • Output File: '{output_filepath}'")
 
             if format == "SVG":
                 if not isinstance(stego_result, str):
@@ -688,12 +697,12 @@ class ImageMultiFormatCoder(BaseStego):
                 stego_result.save(output_filepath, format=format, **save_kwargs)
                 stego_image = stego_result
 
-            print(f"  • Capacity Used: {capacity_percent:.2f}%")
+            print(f"   • Capacity Used: {capacity_percent:.2f}%")
             print(
-                f"  • Remaining Capacity: {capacity_remaining:,} bytes ({(capacity_remaining/(1024 ** 2)):.2f} MB)"
+                f"   • Remaining Capacity: {capacity_remaining:,} bytes ({(capacity_remaining/(1024 ** 2)):.2f} MB)"
             )
             print(
-                f"  • Output File Size: {(os.path.getsize(output_filepath)/(1024 ** 2)):.2f} MB"
+                f"   • Output File Size: {(os.path.getsize(output_filepath)/(1024 ** 2)):.2f} MB"
             )
 
             if show_stats:
@@ -748,12 +757,12 @@ class ImageMultiFormatCoder(BaseStego):
                     payload = stego.decode(stego_path)
                     if not payload:
                         logger.info("No hidden data found in file")
-                        print("   😖 No hidden data found")
+                        print("   ✗ No hidden data found")
                         print("\n✅ Decoding Complete!\n")
                         return 0
                     else:
                         logger.info("Hidden data found in file")
-                        print("  😎 Hidden Data Found!")
+                        print("   Hidden Data Found!")
                         print(f"   • Algorithm detected: {algorithm.name}")
                 else:
                     raise ImageSteganographyException(
@@ -779,12 +788,12 @@ class ImageMultiFormatCoder(BaseStego):
 
                 if header_data[:4] != self.MAGIC:
                     logger.debug("No hidden data found in image")
-                    print("   😖 No hidden data found")
+                    print("   ✗ No hidden data found")
                     print("\n✅ Decoding Complete!\n")
                     return 0
                 else:
                     logger.info("Hidden data found in file")
-                    print("  😎 Hidden Data Found!")
+                    print("    Hidden Data Found!")
                     print(f"   • Algorithm detected: {algorithm.name}")
                 algorithm = Algorithm(header_data[5])
                 encrypted = header_data[6]
@@ -807,7 +816,7 @@ class ImageMultiFormatCoder(BaseStego):
                     logger.error(f"❌ Image Decoding failed: {e}")
                     return 1
 
-            print("  📄 Hidden Files:")
+            print("   Hidden Files:")
             for file_info in extracted_files:
                 print(f"   • {file_info.file_name} ({file_info.file_size_mb})")
                 output_path = os.path.join(output_dir, file_info.full_path)
@@ -816,7 +825,7 @@ class ImageMultiFormatCoder(BaseStego):
                     os.makedirs(output_file_dir, exist_ok=True)
                     logger.debug(f"Created directory: {output_file_dir}")
                 print("\n🔄 Extracting Hidden Files...")
-                print(f"  • Output Directory: '{os.path.dirname(output_path)}'")
+                print(f"   • Output Directory: '{os.path.dirname(output_path)}'")
 
                 file_data = file_info.file_data
                 if file_data is None:
@@ -836,3 +845,167 @@ class ImageMultiFormatCoder(BaseStego):
 
         except Exception as e:
             raise ImageSteganographyException(f"Error decoding image: {e}")
+
+
+class ImageGenerator:
+    def __init__(self, out_dir, width=512, height=512, frames_per_gif=20):
+        self.WIDTH = width
+        self.HEIGHT = height
+        self.FRAMES_PER_GIF = frames_per_gif
+        os.makedirs(out_dir, exist_ok=True)
+        self.OUT = out_dir
+        self.RUN_SEED = int(time.time_ns())
+        self.rng = np.random.default_rng(self.RUN_SEED)
+
+        self.PALETTE_IMG = Image.new("P", (1, 1))
+        self.PALETTE_IMG.putpalette(self.fixed_rgb_palette())
+
+    def create_secret_files(self):
+        try:
+            logger.debug("Creating test_secret_small.txt")
+            with open(f"{self.OUT}/test_secret_small.txt", "w") as f:
+                f.write("YOLO")
+            print("   ✓ Created test_secret_small.txt")
+            logger.info("Created test_secret_small.txt")
+
+            logger.debug("Creating test_secret.txt")
+            with open(f"{self.OUT}/test_secret.txt", "w") as f:
+                f.write(
+                    "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExY3JqdDJ2Y3VhcHR0OXY1d2RkMGQxdmJmbXdobGI1bnp1dWx0a3NxMiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Yxg7MDkPj4kmI/giphy.gif"
+                )
+            print("   ✓ Created test_secret.txt")
+            logger.info("Created test_secret.txt")
+        except Exception as e:
+            logger.exception("Failed to create text files")
+            print(f"❌ Error creating text files: {e}")
+            return 1
+
+    def strip_metadata(self, image: Image.Image) -> Image.Image:
+        clean = Image.new(image.mode, image.size)
+        clean.putdata(list(image.getdata()))
+        return clean
+
+    def fixed_rgb_palette(self):
+        palette = []
+        for r in range(0, 256, 51):
+            for g in range(0, 256, 51):
+                for b in range(0, 256, 51):
+                    palette.extend([r, g, b])
+        return palette[:768]
+
+    def generate_pattern(self, design_type: str) -> np.ndarray:
+        base = self.rng.integers(
+            0, 256, size=(self.HEIGHT, self.WIDTH, 3), dtype=np.uint8
+        )
+
+        if design_type == "gradient":
+            x = np.linspace(0, 255, self.WIDTH, dtype=np.uint8)
+            y = np.linspace(0, 255, self.HEIGHT, dtype=np.uint8)
+            base[..., 0] = np.tile(x, (self.HEIGHT, 1))
+            base[..., 1] = np.tile(y[:, None], (1, self.WIDTH))
+            base[..., 2] = np.flipud(np.tile(x, (self.HEIGHT, 1)))
+            base = (base.astype(np.uint16) + self.rng.integers(0, 256, size=3)).astype(
+                np.uint8
+            )
+
+        elif design_type == "channels":
+            idx = self.rng.permutation(3)
+            base = base[..., idx]
+
+        elif design_type == "waves":
+            xv, yv = np.meshgrid(
+                np.linspace(0, 2 * np.pi, self.WIDTH),
+                np.linspace(0, 2 * np.pi, self.HEIGHT),
+            )
+            base[..., 0] = (
+                (np.sin(xv + self.rng.random() * 2 * np.pi) * 127 + 128) % 256
+            ).astype(np.uint8)
+            base[..., 1] = (
+                (np.sin(yv + self.rng.random() * 2 * np.pi) * 127 + 128) % 256
+            ).astype(np.uint8)
+            base[..., 2] = (
+                (np.sin(xv + yv + self.rng.random() * 2 * np.pi) * 127 + 128) % 256
+            ).astype(np.uint8)
+
+        return base
+
+    def save_static_formats(self):
+        design_type = self.rng.choice(["noise", "gradient", "channels", "waves"])
+        rgb = self.generate_pattern(design_type)
+        img = self.strip_metadata(Image.fromarray(rgb, "RGB"))
+
+        img.save(os.path.join(self.OUT, "image.bmp"))
+        print("   ✓ Created image.bmp")
+        img.save(os.path.join(self.OUT, "image.png"), compress_level=9)
+        print("   ✓ Created image.png")
+        img.save(
+            os.path.join(self.OUT, "image.jpg"),
+            quality=95,
+            subsampling=0,
+            optimize=False,
+            progressive=False,
+        )
+        print("   ✓ Created image.jpg")
+        img.save(os.path.join(self.OUT, "image.tiff"), compression="raw")
+        print("   ✓ Created image.tiff")
+        img.save(
+            os.path.join(self.OUT, "image.webp"),
+            format="WEBP",
+            lossless=True,
+            quality=100,
+            method=6,
+        )
+        print("   ✓ Created image.webp")
+
+        gif_static = img.quantize(palette=self.PALETTE_IMG, dither=Image.Dither.NONE)
+        gif_static.save(os.path.join(self.OUT, "image_static.gif"), optimize=False)
+        print("   ✓ Created image_static.gif")
+
+    def save_animated_gif(self):
+        frames = []
+        designs = ["noise", "gradient", "channels", "waves"]
+        for _ in range(self.FRAMES_PER_GIF):
+            design_type = self.rng.choice(designs)
+            frame_rgb = self.generate_pattern(design_type)
+            frame = self.strip_metadata(Image.fromarray(frame_rgb, "RGB"))
+            frame = frame.quantize(palette=self.PALETTE_IMG, dither=Image.Dither.FLOYDSTEINBERG)
+            frames.append(frame)
+
+        frames[0].save(
+            os.path.join(self.OUT, "image_animated.gif"),
+            save_all=True,
+            append_images=frames[1:],
+            duration=80,
+            loop=0,
+            optimize=False,
+        )
+        print("   ✓ Created image_animated.gif")
+
+    def save_svg(self):
+        dwg = svgwrite.Drawing(
+            os.path.join(self.OUT, "image.svg"),
+            size=(self.WIDTH, self.HEIGHT),
+            profile="full",
+        )
+
+        c1 = self.rng.integers(0, 256, size=3)
+        c2 = self.rng.integers(0, 256, size=3)
+        c3 = self.rng.integers(0, 256, size=3)
+
+        gradient = dwg.linearGradient(start=(0, 0), end=(1, 1), id="rgbGradient")
+        gradient.add_stop_color(0.0, f"rgb({c1[0]},{c1[1]},{c1[2]})")
+        gradient.add_stop_color(0.5, f"rgb({c2[0]},{c2[1]},{c2[2]})")
+        gradient.add_stop_color(1.0, f"rgb({c3[0]},{c3[1]},{c3[2]})")
+        dwg.defs.add(gradient)
+        dwg.add(
+            dwg.rect(insert=(0, 0), size=("100%", "100%"), fill="url(#rgbGradient)")
+        )
+        dwg.save()
+        print("   ✓ Created image.svg")
+
+    def generate_all(self):
+        self.create_secret_files()
+        self.save_static_formats()
+        self.save_animated_gif()
+        self.save_svg()
+        print("\n✅ Image Creation Complete!")

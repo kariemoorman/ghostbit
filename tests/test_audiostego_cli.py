@@ -461,7 +461,7 @@ class TestAudioStegoCLICreateTestFilesCommand:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             result = cli.create_test_files_command(
-                output_dir=tmpdir, create_carrier=False
+                output_dir=tmpdir
             )
 
             assert result == 0
@@ -482,7 +482,7 @@ class TestAudioStegoCLICreateTestFilesCommand:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             result = cli.create_test_files_command(
-                output_dir=tmpdir, create_carrier=True
+                output_dir=tmpdir
             )
 
             assert result == 0
@@ -496,7 +496,7 @@ class TestAudioStegoCLICreateTestFilesCommand:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             result = cli.create_test_files_command(
-                output_dir=tmpdir, create_carrier=True
+                output_dir=tmpdir
             )
 
             assert result == 0
@@ -957,7 +957,7 @@ class TestCreateTestFilesCommand:
         cli = AudioStegoCLI()
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = cli.create_test_files_command(tmpdir, create_carrier=False)
+            result = cli.create_test_files_command(tmpdir)
 
             assert result == 0
 
@@ -979,7 +979,7 @@ class TestCreateTestFilesCommand:
         mock_audio_segment.from_wav.side_effect = Exception("Conversion error")
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = cli.create_test_files_command(tmpdir, create_carrier=True)
+            result = cli.create_test_files_command(tmpdir)
 
             assert result == 0
 
@@ -989,7 +989,7 @@ class TestCreateTestFilesCommand:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             test_dir = os.path.join(tmpdir, "testcases")
-            result = cli.create_test_files_command(test_dir, create_carrier=False)
+            result = cli.create_test_files_command(test_dir)
             output_path = os.path.join("output", test_dir)
 
             assert os.path.exists(output_path)

@@ -11,7 +11,9 @@ from ghostbit.helpers.format_argparse import (
     Colors as C,
 )
 from ghostbit.imagestego.core.image_multiformat_coder import (
+    ImageGenerator,
     ImageMultiFormatCoder,
+    ImageTestCreationException,
     ImageMultiFormatCoderException,
 )
 
@@ -32,7 +34,7 @@ class ImageStegoCLI:
             print(f"\n{emoji} {C.BOLD}{C.BRIGHT_BLUE}{title}{C.RESET}")
         else:
             print(f"\n{C.BOLD}{C.BRIGHT_BLUE}{title}{C.RESET}")
-        print(f"{C.WHITE}{'─' * 70}{C.RESET}\n")
+        print(f"{C.BRIGHT_BLUE}{'─' * 70}{C.RESET}\n")
 
     def encode_command(
         self,
@@ -81,7 +83,7 @@ class ImageStegoCLI:
                 password=password,
                 show_stats=show_stats,
             )
-            print(f"{C.WHITE}{'─' * 70}{C.RESET}\n")
+            print(f"{C.BRIGHT_BLUE}{'─' * 70}{C.RESET}\n")
             return 0
 
         except ImageMultiFormatCoderException as e:
@@ -121,7 +123,7 @@ class ImageStegoCLI:
             self._print_header("Decoding Files", "🔓")
             stego = ImageMultiFormatCoder()
             stego.decode(input_file, output_filepath, password)
-            print(f"{C.WHITE}{'─' * 70}{C.RESET}\n")
+            print(f"{C.BRIGHT_BLUE}{'─' * 70}{C.RESET}\n")
             return 0
 
         except ImageMultiFormatCoderException as e:
@@ -151,7 +153,7 @@ class ImageStegoCLI:
             print(f"  • {result['capacity_bytes']:,} bytes")
             print(f"  • {result['capacity_kb']:.2f} KB")
             print(f"  • {result['capacity_mb']:.2f} MB")
-            print(f"\n{C.WHITE}{'─' * 70}{C.RESET}\n")
+            print(f"\n{C.BRIGHT_BLUE}{'─' * 70}{C.RESET}\n")
             return 0
 
         except ImageMultiFormatCoderException as e:
@@ -183,26 +185,40 @@ class ImageStegoCLI:
 
             print("\n🔍 Steganography Details:")
             print(
-                f"  • Hidden Data: {'✓ YES' if result['has_hidden_data'] else '✗ NO'}"
+                f"   • Hidden Data: {'✓ YES' if result['has_hidden_data'] else '✗ NO'}"
             )
             if result["has_hidden_data"]:
                 print(
-                    f"  • Algorithm: {result['algorithm'].name if result['algorithm'] else 'Unknown'}"
+                    f"   • Algorithm: {result['algorithm'].name if result['algorithm'] else 'Unknown'}"
                 )
-                print(f"  • Encrypted: {'Yes' if result['encrypted'] else 'No'}")
+                print(f"   • Encrypted: {'Yes' if result['encrypted'] else 'No'}")
                 print("\n💡 Next Steps:")
                 if result["encrypted"]:
-                    print(f"  • ghostbit image decode -i {input_file} -p")
+                    print(f"   • ghostbit image decode -i {input_file} -p")
                 else:
-                    print(f"  • ghostbit image decode -i {input_file}")
-            print(f"\n{C.WHITE}{'─' * 70}{C.RESET}\n")
+                    print(f"   • ghostbit image decode -i {input_file}")
+            print(f"\n{C.BRIGHT_BLUE}{'─' * 70}{C.RESET}\n")
             return 0
 
         except ImageMultiFormatCoderException as e:
             logger.error(
                 f"Image Analysis failed with ImageMultiFormatCoderException: {e}"
             )
-            print(f"\n❌ Image Analysis failed: {e}")
+            print(f"\n  Image Analysis failed: {e}")
+            return 1
+
+    def create_test_files_command(self, output_dir: str):
+        self._print_header("Creating Test Images", "📁")
+        try:
+            outputdir = os.path.join("output", output_dir)
+            logger.debug(f"Output directory: {outputdir}")
+            print(f"📁 Output Directory: '{outputdir}'\n")
+            image_gen = ImageGenerator(out_dir=outputdir)
+            image_gen.generate_all()
+            print(f"\n{C.BRIGHT_BLUE}{'─' * 70}{C.RESET}\n")
+        except ImageTestCreationException as e:
+            logger.error(f"Image Test File Creation failed: {e}")
+            print(f"\n  Image Test File Creation failed: {e}")
             return 1
 
 
@@ -229,7 +245,9 @@ def main():
   
   {C.BOLD}{C.BLUE}Analyze:{C.RESET}
     {C.BOLD}{C.PINK}ghostbit image{C.RESET} {C.GREEN}analyze{C.RESET} {C.GREEN}-i{C.RESET} {C.CYAN}suspicious.webp{C.RESET} {C.GREEN}-v{C.RESET}
-    
+
+  {C.BOLD}{C.BLUE}Test Image Creation:{C.RESET}
+    {C.BOLD}{C.PINK}ghostbit image{C.RESET} {C.GREEN}test{C.RESET} {C.GREEN}-o{C.RESET} {C.CYAN}test_images{C.RESET}
     """,
     )
 
@@ -363,6 +381,29 @@ def main():
         help=f"{C.CYAN}Enable verbose output{C.RESET}",
     )
 
+    test_parser = subparsers.add_parser(
+        "test",
+        formatter_class=ColorHelpFormatter,
+        add_help=False,
+        help=f"{C.CYAN}Create test image files{C.RESET}",
+    )
+    test_parser.add_argument(
+        "-h", "--help", action="help", help=f"{C.CYAN}Show help message{C.RESET}"
+    )
+    test_parser.add_argument(
+        "-o",
+        "--output_dir",
+        required=False,
+        default="test_images",
+        help=f"{C.CYAN}(Optional) Output folder for test files{C.RESET}",
+    )
+    test_parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help=f"{C.CYAN}Enable verbose output{C.RESET}",
+    )
+
     args = parser.parse_args()
 
     if not getattr(args, "subparser_command", None):
@@ -390,6 +431,13 @@ def main():
 
         elif args.subparser_command == "analyze":
             return cli.analyze_command(args.input_file)
+
+        elif args.subparser_command == "test":
+            return cli.create_test_files_command(args.output_dir)
+
+        else:
+            parser.print_help()
+            return 1
 
     except ImageMultiFormatCoderException as e:
         print(f"❌ ImageMultiFormatCoder Error: {e}")

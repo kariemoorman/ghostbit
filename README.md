@@ -218,9 +218,26 @@ ghostbit image analyze -i <image_filepath>
 
 </details>
 
+<details>
+<summary><b>Create Test Files</b></summary>
+
 <br>
 
-### 🔗 Python API
+
+```bash
+# Audio Creation for Testing
+ghostbit audio test -o test_audio
+
+# Image Creation for Testing
+ghostbit image test -o test_images
+
+```
+
+</details>
+
+<br>
+
+### Python API
 
 GH0STB1T provides a Python API for seamless integration into existing applications and workflows.
 

@@ -430,11 +430,9 @@ class AudioStegoCLI:
         logger.debug("Info display complete")
         return 0
 
-    def create_test_files_command(
-        self, output_dir: str, create_carrier: bool
-    ) -> Optional[int]:
+    def create_test_files_command(self, output_dir: str) -> Optional[int]:
         """Create test files for demonstration"""
-        logger.info(f"Creating test files in {output_dir}, carrier={create_carrier}")
+        logger.info(f"Creating test files in {output_dir}")
 
         self._print_header("Creating Test Files", "📄")
 
@@ -465,68 +463,63 @@ class AudioStegoCLI:
             print(f"❌ Error creating text files: {e}")
             return 1
 
-        if create_carrier:
+        try:
+            logger.info("Creating carrier audio files")
+            print("\n🎵 Creating test carrier WAV file...")
+
+            wav_path = f"{output_dir}/test_carrier.wav"
+            logger.debug(f"Creating WAV file: {wav_path}")
+
+            with wave.open(wav_path, "w") as wav:
+                wav.setnchannels(1)  # Mono
+                wav.setsampwidth(2)  # 16-bit
+                wav.setframerate(44100)  # 44.1kHz
+
+                duration = 5
+                logger.debug(f"Generating {duration} seconds of audio")
+                for i in range(44100 * duration):
+                    value = int(32767 * 0.3 * math.sin(2 * math.pi * 440 * i / 44100))
+                    wav.writeframes(struct.pack("<h", value))
+
+            size_mb = os.path.getsize(wav_path) / 1024 / 1024
+            print(f"  ✓ Created test_carrier.wav ({size_mb:.2f} MB)")
+            logger.info(f"Created test_carrier.wav ({size_mb:.2f} MB)")
+
+            logger.info("Converting WAV to other formats")
+            print("\n🎵 Converting WAV to other formats...")
+
             try:
-                logger.info("Creating carrier audio files")
-                print("\n🎵 Creating test carrier WAV file...")
+                sound = AudioSegment.from_wav(wav_path)
 
-                wav_path = f"{output_dir}/test_carrier.wav"
-                logger.debug(f"Creating WAV file: {wav_path}")
+                logger.debug("Exporting to MP3")
+                sound.export(f"{output_dir}/test_carrier.mp3", format="mp3")
+                print("  ✓ Created test_carrier.mp3")
+                logger.info("Created test_carrier.mp3")
 
-                with wave.open(wav_path, "w") as wav:
-                    wav.setnchannels(1)  # Mono
-                    wav.setsampwidth(2)  # 16-bit
-                    wav.setframerate(44100)  # 44.1kHz
+                logger.debug("Exporting to M4A")
+                sound.export(f"{output_dir}/test_carrier.m4a", format="mp4")
+                print("  ✓ Created test_carrier.m4a")
+                logger.info("Created test_carrier.m4a")
 
-                    duration = 5
-                    logger.debug(f"Generating {duration} seconds of audio")
-                    for i in range(44100 * duration):
-                        value = int(
-                            32767 * 0.3 * math.sin(2 * math.pi * 440 * i / 44100)
-                        )
-                        wav.writeframes(struct.pack("<h", value))
+                logger.debug("Exporting to FLAC")
+                sound.export(f"{output_dir}/test_carrier.flac", format="flac")
+                print("  ✓ Created test_carrier.flac")
+                logger.info("Created test_carrier.flac")
 
-                size_mb = os.path.getsize(wav_path) / 1024 / 1024
-                print(f"  ✓ Created test_carrier.wav ({size_mb:.2f} MB)")
-                logger.info(f"Created test_carrier.wav ({size_mb:.2f} MB)")
+                logger.debug("Exporting to AIFF")
+                sound.export(f"{output_dir}/test_carrier.aiff", format="aiff")
+                print("  ✓ Created test_carrier.aiff")
+                logger.info("Created test_carrier.aiff")
 
-                logger.info("Converting WAV to other formats")
-                print("\n🎵 Converting WAV to other formats...")
-
-                try:
-                    sound = AudioSegment.from_wav(wav_path)
-
-                    logger.debug("Exporting to MP3")
-                    sound.export(f"{output_dir}/test_carrier.mp3", format="mp3")
-                    print("  ✓ Created test_carrier.mp3")
-                    logger.info("Created test_carrier.mp3")
-
-                    logger.debug("Exporting to M4A")
-                    sound.export(f"{output_dir}/test_carrier.m4a", format="mp4")
-                    print("  ✓ Created test_carrier.m4a")
-                    logger.info("Created test_carrier.m4a")
-
-                    logger.debug("Exporting to FLAC")
-                    sound.export(f"{output_dir}/test_carrier.flac", format="flac")
-                    print("  ✓ Created test_carrier.flac")
-                    logger.info("Created test_carrier.flac")
-
-                    logger.debug("Exporting to AIFF")
-                    sound.export(f"{output_dir}/test_carrier.aiff", format="aiff")
-                    print("  ✓ Created test_carrier.aiff")
-                    logger.info("Created test_carrier.aiff")
-
-                    print("\n✅ Success!")
-                except Exception as e:
-                    logger.warning(f"Audio format conversion failed: {e}")
-                    print(f"⚠️  Some format conversions failed: {e}")
-                    print("    WAV file created successfully")
-
+                print("\n✅ Success!")
             except Exception as e:
-                logger.error(f"Failed to create carrier audio files: {e}")
-                print(f"⚠️  Could not create WAV file: {e}")
-        else:
-            logger.debug("Carrier creation skipped (not requested)")
+                logger.warning(f"Audio format conversion failed: {e}")
+                print(f"⚠️  Some format conversions failed: {e}")
+                print("    WAV file created successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to create carrier audio files: {e}")
+            print(f"⚠️  Could not create WAV file: {e}")
 
         abs_path = os.path.abspath(output_dir)
         logger.info(f"Test files created in: {abs_path}")
@@ -571,7 +564,9 @@ def main() -> Optional[int]:
   
   {C.BOLD}{C.BLUE}Analyze:{C.RESET}
     {C.BOLD}{C.PINK}ghostbit audio{C.RESET} {C.GREEN}analyze{C.RESET} {C.GREEN}-i{C.RESET} {C.CYAN}audio.wav{C.RESET} {C.GREEN}-v{C.RESET}
-        
+
+  {C.BOLD}{C.BLUE}Test Audio Creation:{C.RESET}
+    {C.BOLD}{C.PINK}ghostbit audio{C.RESET} {C.GREEN}test{C.RESET} {C.GREEN}-o{C.RESET} {C.CYAN}test_audio{C.RESET}  
         """,
     )
 
@@ -769,7 +764,7 @@ def main() -> Optional[int]:
         "test",
         formatter_class=ColorHelpFormatter,
         add_help=False,
-        help=f"{C.CYAN}Create test secret files{C.RESET}",
+        help=f"{C.CYAN}Create test audio files{C.RESET}",
     )
     test_parser.add_argument(
         "-h", "--help", action="help", help=f"{C.CYAN}Show help message{C.RESET}"
@@ -778,13 +773,8 @@ def main() -> Optional[int]:
         "-o",
         "--output_dir",
         required=False,
-        default="testcases",
+        default="test_audio",
         help=f"{C.CYAN}Output folder for test files{C.RESET}",
-    )
-    test_parser.add_argument(
-        "--create-carrier",
-        action="store_true",
-        help=f"{C.CYAN}Create a test carrier audio files (AIFF|WAV|MP3|FLAC|M4A){C.RESET}",
     )
     test_parser.add_argument(
         "-v",
@@ -826,12 +816,13 @@ def main() -> Optional[int]:
         )
     elif args.subparser_command == "capacity":
         return cli.capacity_command(args.input_file, args.quality)
+
     elif args.subparser_command == "info":
         return cli.info_command()
+
     elif args.subparser_command == "test":
-        return cli.create_test_files_command(
-            args.output_dir, create_carrier=args.create_carrier
-        )
+        return cli.create_test_files_command(args.output_dir)
+
     else:
         parser.print_help()
         return 1

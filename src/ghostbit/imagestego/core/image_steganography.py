@@ -141,7 +141,7 @@ class BaseStego:
             if len(base_name) > max_base_len:
                 base_name = base_name[:max_base_len]
                 logger.info("Truncating secret file name")
-                print(f"  • Truncating filename: {base_name}{ext}")
+                print(f"   • Truncating filename: {base_name}{ext}")
 
             full_name = base_name + ext
 
@@ -158,29 +158,29 @@ class BaseStego:
             )
 
             payload_parts.append(header + file_data)
-            logger.debug(f" • Added part: {len(header + file_data)} bytes")
+            logger.debug(f"  • Added part: {len(header + file_data)} bytes")
 
         combined_data = b"".join(payload_parts)
 
         logger.debug(f"Combined data (before end marker): {len(combined_data)} bytes")
-        print(f"  • Combined: {len(combined_data)} bytes")
+        print(f"   • Combined: {len(combined_data)} bytes")
 
         combined_data += b"IMGF"
 
         logger.debug(f"Combined data (with end marker): {len(combined_data)} bytes")
-        print(f"  • With end marker: {len(combined_data)} bytes")
+        print(f"   • With end marker: {len(combined_data)} bytes")
 
         compressed = zlib.compress(combined_data, level=9)
 
         logger.debug(f"Compressed data: {len(compressed)} bytes")
-        print(f"  • Compressed: {len(compressed)} bytes")
+        print(f"   • Compressed: {len(compressed)} bytes")
 
         if password:
             salt, nonce, ciphertext = self._encrypt_data(compressed, password)
             logger.debug(
                 f"Encrypted: salt={len(salt)}, nonce={len(nonce)}, ciphertext={len(ciphertext)}"
             )
-            print(f"  • Encrypted: {len(ciphertext)} bytes")
+            print(f"   • Encrypted: {len(ciphertext)} bytes\n")
             payload = (
                 self.MAGIC
                 + struct.pack("B", self.VERSION)

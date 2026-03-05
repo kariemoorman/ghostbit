@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.3
+- Added test image generation to GH0STB1T imagestego
+
 ## 0.0.2 - 2026-02-05
 
 ### Added 

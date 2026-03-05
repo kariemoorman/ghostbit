@@ -63,6 +63,7 @@ dependencies = [
     "PyWavelets>=1.4.0",
     "argon2-cffi>=25.1.0",
     "cryptography>=46.0.3",
+    "svgwrite>=1.4.3",
 ]
 
 [project.urls]
@@ -86,7 +87,8 @@ image = [
     "scipy>=1.11.0",
     "PyWavelets>=1.4.0",
     "argon2-cffi>=25.1.0",
-    "cryptography>=46.0.3"
+    "cryptography>=46.0.3",
+    "svgwrite>=1.4.3"
 ]
 
 # video = [

@@ -783,8 +783,12 @@ class ImageMultiFormatCoder(BaseStego):
                 if not isinstance(stego, LSBStego):
                     raise ImageSteganographyException("Expected LSBStego instance")
                 logger.info("Reading payload header (8 bytes)")
-                header_data = stego.decode(stego_path, 8)
-                logger.debug(f"Header data: {header_data.hex()}")
+                try:
+                    header_data = stego.decode(stego_path, 8)
+                    logger.debug(f"Header data: {header_data.hex()}")
+                except ImageSteganographyException as e:
+                    logger.error(f"❌ Failed to read header from corrupted image: {e}")
+                    return 1
 
                 if header_data[:4] != self.MAGIC:
                     logger.debug("No hidden data found in image")
@@ -844,7 +848,13 @@ class ImageMultiFormatCoder(BaseStego):
             return 0
 
         except Exception as e:
-            raise ImageSteganographyException(f"Error decoding image: {e}")
+            raise
+        except OSError as e:
+            logger.error(f"Error decoding image (corrupt/unreadable): {e}", exc_info=True)
+            return 1
+        except Exception as e:
+            logger.error(f"Unexpected error decoding image: {e}", exc_info=True)
+            return 1
 
 
 class ImageGenerator:

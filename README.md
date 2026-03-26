@@ -12,13 +12,16 @@
     <img src="https://img.shields.io/github/v/release/kariemoorman/ghostbit?cacheSeconds=300" alt="Release">
   </a>
   <a href="https://www.python.org/downloads/">
-    <img src="https://img.shields.io/badge/python-3.13+-green.svg" alt="Language">
+    <img src="https://img.shields.io/badge/python-3.13+-purple.svg" alt="Language">
   </a>
   <a href="https://img.shields.io/github/languages/code-size/kariemoorman/ghostbit">
     <img src="https://img.shields.io/github/languages/code-size/kariemoorman/ghostbit" alt="Code Size">
   </a>
 </p>
 <p align='center'>
+  <a href="https://github.com/kariemoorman/ghostbit/actions/workflows/security.yml/badge.svg">
+    <img src="https://github.com/kariemoorman/ghostbit/actions/workflows/security.yml/badge.svg" alt="Security">
+  </a>
   <a href="https://github.com/kariemoorman/ghostbit/actions/workflows/test.yml/badge.svg">
     <img src="https://github.com/kariemoorman/ghostbit/actions/workflows/test.yml/badge.svg" alt="Tests">
   </a>

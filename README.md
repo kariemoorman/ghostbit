@@ -525,13 +525,13 @@ GH0STB1T includes an MCP Server for standardized and secure integration with LLM
 |- audio_capacity | - image_capacity |
 |- audio_analyze | - image_analyze |
 |- generate_audio_carrier | - generate_image_carrier |
-|||
+
 
 
 Security hardening measures include:
 - Increased password security, ensuring passwords never flow through the AI model's context
 - Type-annotated tool parameters that auto-generate JSON schemas via FastMCP
-- Input sanitization, including rejection of null bytes and control characters, path normalization, rejection of shell metacharacters, pattern validation
+- Input sanitization, including null bytes & control characters rejection, path normalization, shell metacharacter rejection, pattern validation
 - Filesystem sandbox, limiting I/O to only designated and resolvable paths
 - Symlink rejection, blocking symbolic links on all input files
 - Prompt injection defense including filename sanitization
@@ -606,6 +606,8 @@ password_file="~/.ghostbit-password"
 <details>
 <summary><b>Onboarding MCP Server</b></summary> 
 
+<br> 
+
 Ensure the GH0STB1T MCP package is installed in a virtual environment: 
 
 ```
@@ -656,47 +658,53 @@ mcp.json
 
 1. Generate a carrier audio file
 
-"Use generate_audio_carrier to create a WAV file at /path/to/outputdir/carrier.wav with duration 5 seconds, frequency 440 Hz, sample rate 44100, and 1 channel"
+* "Use generate_audio_carrier to create a WAV file at /path/to/outputdir/carrier.wav with duration 5 seconds, frequency 440 Hz, sample rate 44100, and 1 channel"
 
 2. Check capacity
 
-"Use audio_capacity to check how much data /path/to/output/carrier.wav can hide with quality 'normal'"
+* "Use audio_capacity to check how much data /path/to/output/carrier.wav can hide with quality 'normal'"
 
 3. Encode a secret file
 
-"Use audio_encode to hide /path/to/directory/test_document.txt inside /path/to/outputdir/carrier.wav, save output to /path/to/output/encoded_audio.wav, quality 'normal', password_file='~/.ghostbit-password'"
+* "Use audio_encode to hide /path/to/directory/test_document.txt inside /path/to/outputdir/carrier.wav, save output to /path/to/output/encoded_audio.wav, quality 'normal', password_file='~/.ghostbit-password'"
 
 4. Analyze for hidden data
 
-"Use audio_analyze on /path/to/output/encoded_audio.wav with password_file='~/.ghostbit-password'"
+* "Use audio_analyze on /path/to/output/encoded_audio.wav with password_file='~/.ghostbit-password'"
 
 5. Decode and extract
 
-"Use audio_decode on /path/to/output/encoded_audio.wav, output to /path/to/output/decoded, password_file='~/.ghostbit-password'"
+* "Use audio_decode on /path/to/output/encoded_audio.wav, output to /path/to/output/decoded, password_file='~/.ghostbit-password'"
 
 6. Full end-to-end (single prompt)
 
-"Generate a 10-second 440Hz WAV carrier at /path/to/output/stego_carrier.wav, then check its capacity at all three quality modes (low, normal, high), then hide /path/to/test_document.txt in it with quality 'low' and password_file='~/.ghostbit-password' saving to /path/to/output/stego_audio.wav, then analyze the result"
+* "Generate a 10-second 440Hz WAV carrier at /path/to/output/stego_carrier.wav, then check its capacity at all three quality modes (low, normal, high), then hide /path/to/test_document.txt in it with quality 'low' and password_file='~/.ghostbit-password' saving to /path/to/output/stego_audio.wav, then analyze the result"
 
 ### Image
 
 1. Generate a carrier image
-"Use generate_image_carrier to create a PNG image at /path/to/output/carrier.png with width 800, height 600, and a gradient pattern"
+
+* "Use generate_image_carrier to create a PNG image at /path/to/output/carrier.png with width 800, height 600, and a gradient pattern"
 
 2. Check capacity
-"Use image_capacity to check how much data /path/to/output/carrier.png can hide"
+
+* "Use image_capacity to check how much data /path/to/output/carrier.png can hide"
 
 3. Encode a secret file
-"Use image_encode to hide /path/to/testcases/test_document.txt inside /path/to/output/carrier.png, save output to /path/to/output/encoded_image, password_file='~/.ghostbit-pw.enc'"
+
+* "Use image_encode to hide /path/to/testcases/test_document.txt inside /path/to/output/carrier.png, save output to /path/to/output/encoded_image, password_file='~/.ghostbit-pw.enc'"
 
 4. Analyze for hidden data
-"Use image_analyze on /path/to/output/encoded_image/carrier.png"
+   
+* "Use image_analyze on /path/to/output/encoded_image/carrier.png"
 
 5. Decode and extract
-"Use image_decode on /path/to/output/carrier.png, output to /path/to/output/decoded_image, password_file='~/.ghostbit-pw.enc'"
+   
+* "Use image_decode on /path/to/output/carrier.png, output to /path/to/output/decoded_image, password_file='~/.ghostbit-pw.enc'"
 
 6. Full end-to-end (single prompt)
-"Generate a 1000x1000 waves pattern PNG at /path/to/output/stego_cover.png, then check its capacity, then hide /path/to/test_document.txt in it with password_file='~/.ghostbit-pw.enc', saving to /path/to/output/encoded, then analyze the result"
+
+* "Generate a 1000x1000 waves pattern PNG at /path/to/output/stego_cover.png, then check its capacity, then hide /path/to/test_document.txt in it with password_file='~/.ghostbit-pw.enc', saving to /path/to/output/encoded, then analyze the result"
 
 </details>
 

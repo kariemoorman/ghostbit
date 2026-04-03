@@ -106,11 +106,13 @@ all = [
     "PyWavelets>=1.4.0",
     "argon2-cffi>=25.1.0",
     "cryptography>=46.0.3",
+    "svgwrite>=1.4.3",
 ]
 
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
+    "pytest-random-order>=1.2.0",
     "mypy>=1.0.0",
     "ruff>=0.14.10",
     "black>=25.12.0",

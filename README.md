@@ -103,8 +103,7 @@ This implementation pairs existing steganography protocols with modern, audited 
 
 <b>Multimedia Steganography:</b> Multi-format support across audio, images, and video  
  • Audio: WAV / MP3 / FLAC / M4A / AIFF  
- • Image: BMP / PNG / JPEG / WEBP / TIFF / SVG / GIF  
- • Video: MP4 / MKV / MOV / AVI 
+ • Image: BMP / PNG / JPEG / WEBP / TIFF / SVG / GIF
 
 <b>Strong Encryption:</b> AES-GCM with Argon2id key derivation for embedded files (see [Security Upgrade](#why))
 
@@ -151,7 +150,7 @@ pip install -e ".[dev]"
 
 ## Usage
 
-### 💻 CLI
+### CLI
 
 GH0STB1T CLI provides quick encoding/decoding/analysis operations directly from the terminal.
 
@@ -432,7 +431,7 @@ print("✅ Files extracted successfully!")
 
 <br>
 
-### 🐳 Docker
+### Docker
 
 GH0STB1T can be deployed using Docker for isolated, reproducible environments.
 
@@ -513,11 +512,199 @@ docker-compose down --rmi all
 
 ## LLM Integration
 
+### MCP Server 
+
+GH0STB1T includes an MCP Server for standardized and secure integration with LLM-based systems, supporting 10 tools: 
+
+[GH0STB1T MCP Server](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/mcp_server)
+
+|Audio|Image|
+|--|--|
+|- audio_encode | - image_encode |
+|- audio_decode | - image_decode |
+|- audio_capacity | - image_capacity |
+|- audio_analyze | - image_analyze |
+|- generate_audio_carrier | - generate_image_carrier |
+|||
+
+
+Security hardening measures include:
+- Increased password security, ensuring passwords never flow through the AI model's context
+- Input sanitization, including rejection of null bytes and control characters, path normalization, and rejection of shell metacharacters
+- Filesystem sandbox, limiting I/O to only resolvable paths
+- Symlink rejection, blocking symbolic links on all input files
+- Filename sanitization, to prevent prompt injection attacks
+- Error sanitization, ensuring errors are translated into saafe category-level messages
+- Audit logging and password scrubbing
+- Resource exhaustion prevention, including file size limits and stateless tool calls.
+
+Instructions for setting up the MCP Server are provided below:
+<details>
+<summary><b>Password Management</b></summary>
+
+<br> 
+Unlike the CLI, MCP Servers require an additional layer of security to prevent LLMs from accessing the passwords used to encrypt/decrypt secret files encoded in digital media. 
+
+For this reason, users must first prepare a password file, either encrypted using SOPS or plaintext (with read-only permissions).
+
+### SOPS
+```
+brew install sops age 
+```
+```
+# Create the directory
+mkdir -p ~/.config/sops/age
+
+# Generate the key
+age-keygen -o ~/.config/sops/age/keys.txt
+
+chmod 600 ~/.config/sops/age/keys.txt
+chmod 700 ~/.config/sops/age
+chmod 700 ~/.config/sops
+
+# Now get the public key
+AGE_PUB=$(grep "public key" ~/.config/sops/age/keys.txt | awk '{print $NF}')
+
+# Create config in home directory
+cat > ~/.sops.yaml << EOF
+creation_rules:
+  - age: "$AGE_PUB"
+EOF
+```
+
+```
+# Create password file
+echo -n "demo123" > ~/.ghostbit-pw.txt
+#Encrypt the file using SOPS + age
+sops -e ~/.ghostbit-pw.txt > ~/.ghostbit-pw.enc
+```
+```
+# Should print your password
+sops -d ~/.ghostbit-pw.enc
+```
+
+```
+password_file='~/.ghostbit-pw.enc'
+```
+
+
+### Plaintext 
+```
+echo -n "demo123" > ~/.ghostbit-password
+chmod 600 ~/.ghostbit-password
+```
+```
+password_file="~/.ghostbit-password"
+```
+
+</details>
+
+
+<details>
+<summary><b>Onboarding MCP Server</b></summary> 
+
+Ensure the GH0STB1T MCP package is installed in a virtual environment: 
+
+```
+cd /path/to/ghostbit
+python -m venv .ghostbit-venv
+source .ghostbit-venv/bin/activate
+pip install -e '.[mcp]'
+```
+  
+
+### LM Studio
+
+Option 1: Use General Command
+mcp.json
+```
+{
+  "mcpServers": {
+    "ghostbit": {
+      "command": "/path/to/ghostbit/.ghostbit-venv/bin/ghostbit-mcp"
+    }
+  }
+}
+```
+
+Option 2: Use General Command with GHOSTBIT_ALLOWED_DIRS
+mcp.json
+```
+{
+  "mcpServers": {
+    "ghostbit": {
+      "command": "/path/to/ghostbit/.ghostbit-venv/bin/ghostbit-mcp",
+      "env": {
+        "GHOSTBIT_ALLOWED_DIRS": "/path/to/ghostbit/output:/path/to/ghostbit/tests/testcases"
+      }
+    }
+  }
+}
+
+```
+
+</details>
+
+
+<details>
+<summary><b>Example Prompts</b></summary>
+
+### Audio
+
+1. Generate a carrier audio file
+
+"Use generate_audio_carrier to create a WAV file at /path/to/outputdir/carrier.wav with duration 5 seconds, frequency 440 Hz, sample rate 44100, and 1 channel"
+
+2. Check capacity
+
+"Use audio_capacity to check how much data /path/to/output/carrier.wav can hide with quality 'normal'"
+
+3. Encode a secret file
+
+"Use audio_encode to hide /path/to/directory/test_document.txt inside /path/to/outputdir/carrier.wav, save output to /path/to/output/encoded_audio.wav, quality 'normal', password_file='~/.ghostbit-password'"
+
+4. Analyze for hidden data
+
+"Use audio_analyze on /path/to/output/encoded_audio.wav with password_file='~/.ghostbit-password'"
+
+5. Decode and extract
+
+"Use audio_decode on /path/to/output/encoded_audio.wav, output to /path/to/output/decoded, password_file='~/.ghostbit-password'"
+
+6. Full end-to-end (single prompt)
+
+"Generate a 10-second 440Hz WAV carrier at /path/to/output/stego_carrier.wav, then check its capacity at all three quality modes (low, normal, high), then hide /path/to/test_document.txt in it with quality 'low' and password_file='~/.ghostbit-password' saving to /path/to/output/stego_audio.wav, then analyze the result"
+
+### Image
+
+1. Generate a carrier image
+"Use generate_image_carrier to create a PNG image at /path/to/output/carrier.png with width 800, height 600, and a gradient pattern"
+
+2. Check capacity
+"Use image_capacity to check how much data /path/to/output/carrier.png can hide"
+
+3. Encode a secret file
+"Use image_encode to hide /path/to/testcases/test_document.txt inside /path/to/output/carrier.png, save output to /path/to/output/encoded_image, password_file='~/.ghostbit-pw.enc'"
+
+4. Analyze for hidden data
+"Use image_analyze on /path/to/output/encoded_image/carrier.png"
+
+5. Decode and extract
+"Use image_decode on /path/to/output/carrier.png, output to /path/to/output/decoded_image, password_file='~/.ghostbit-pw.enc'"
+
+6. Full end-to-end (single prompt)
+"Generate a 1000x1000 waves pattern PNG at /path/to/output/stego_cover.png, then check its capacity, then hide /path/to/test_document.txt in it with password_file='~/.ghostbit-pw.enc', saving to /path/to/output/encoded, then analyze the result"
+
+</details>
+
+
+### Skills
+
 GH0STB1T includes a Skills system designed for seamless integration with LLMs and AI assistants.
 
 ### Available Skills
 
-GH0STB1T provides three specialized skill documents:
+GH0STB1T provides specialized skill documents:
 
 1. [**Audio Steganography**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/audiostego/skills/steganography/SKILL.md) - Complete usage guide with examples
 2. [**Audio Capacity**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/audiostego/skills/capacity/SKILL.md) - Capacity planning and optimization strategies

@@ -850,7 +850,9 @@ class ImageMultiFormatCoder(BaseStego):
         except Exception as e:
             raise
         except OSError as e:
-            logger.error(f"Error decoding image (corrupt/unreadable): {e}", exc_info=True)
+            logger.error(
+                f"Error decoding image (corrupt/unreadable): {e}", exc_info=True
+            )
             return 1
         except Exception as e:
             logger.error(f"Unexpected error decoding image: {e}", exc_info=True)
@@ -978,7 +980,9 @@ class ImageGenerator:
             design_type = self.rng.choice(designs)
             frame_rgb = self.generate_pattern(design_type)
             frame = self.strip_metadata(Image.fromarray(frame_rgb, "RGB"))
-            frame = frame.quantize(palette=self.PALETTE_IMG, dither=Image.Dither.FLOYDSTEINBERG)
+            frame = frame.quantize(
+                palette=self.PALETTE_IMG, dither=Image.Dither.FLOYDSTEINBERG
+            )
             frames.append(frame)
 
         frames[0].save(

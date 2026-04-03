@@ -530,13 +530,16 @@ GH0STB1T includes an MCP Server for standardized and secure integration with LLM
 
 Security hardening measures include:
 - Increased password security, ensuring passwords never flow through the AI model's context
-- Input sanitization, including rejection of null bytes and control characters, path normalization, and rejection of shell metacharacters
-- Filesystem sandbox, limiting I/O to only resolvable paths
+- Type-annotated tool parameters that auto-generate JSON schemas via FastMCP
+- Input sanitization, including rejection of null bytes and control characters, path normalization, rejection of shell metacharacters, pattern validation
+- Filesystem sandbox, limiting I/O to only designated and resolvable paths
 - Symlink rejection, blocking symbolic links on all input files
-- Filename sanitization, to prevent prompt injection attacks
-- Error sanitization, ensuring errors are translated into saafe category-level messages
+- Prompt injection defense including filename sanitization
+- Error sanitization, ensuring errors are translated into safe category-level messages
 - Audit logging and password scrubbing
-- Resource exhaustion prevention, including file size limits and stateless tool calls.
+- STDIO transport with JSON-RPC protocol
+- Stateless tool design (fresh coder instance per call)
+- Resource exhaustion prevention, including file size limits and stateless tool calls
 
 Instructions for setting up the MCP Server are provided below:
 <details>

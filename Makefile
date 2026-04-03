@@ -25,16 +25,16 @@ install-dev: ## Install package with dev dependencies
 	pip install -e ".[dev]"
 
 test: ## Run unit tests only (no coverage)
-	pytest tests/ -v
+	pytest tests/ -v --random-order
 
 test-cov: ## Run tests with terminal coverage report
-	pytest tests/ --cov=ghostbit --cov-report=term-missing
+	pytest tests/ --cov=ghostbit --cov-report=term-missing --random-order
 
 test-cov-html: ## Run tests with html coverage report
-	pytest tests/ --cov=ghostbit --cov-report=html -v
+	pytest tests/ --cov=ghostbit --cov-report=html -v --random-order
 
 test-cov-xml: ## Run tests with xml coverage report
-	pytest tests/ --cov=ghostbit --cov-report=xml -v
+	pytest tests/ --cov=ghostbit --cov-report=xml -v --random-order
 
 type: ## Run type checking only
 	mypy src/ghostbit/

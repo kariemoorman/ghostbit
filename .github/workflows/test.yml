@@ -55,7 +55,7 @@ jobs:
 
           # Install the package itself in editable mode
           if [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
-            pip install -e .
+            pip install -e '.[dev,mcp]'
           fi
           
           # Install additional requirements if they exist

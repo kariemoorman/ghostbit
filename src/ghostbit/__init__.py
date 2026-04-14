@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 __author__ = "Karie Moorman"
 
 _logging_configured = False

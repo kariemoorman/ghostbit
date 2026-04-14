@@ -211,7 +211,7 @@ exclude_lines = [
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.0.2"
+version = "0.0.3"
 version_files = [
     "src/ghostbit/__init__.py:__version__"
 ]

@@ -54,7 +54,7 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 
 dependencies = [
-    "pycryptodomex>=3.21.0",
+    "pycryptodome>=3.15.0",
     "pydub>=0.25.1",
     "audioop-lts>=0.2.2",
     "soundfile>=0.12.1",
@@ -106,7 +106,7 @@ mcp = [
 # ]
 
 all = [
-    "pycryptodomex>=3.21.0",
+    "pycryptodome>=3.15.0",
     "pydub>=0.25.1",
     "audioop-lts>=0.2.2",
     "soundfile>=0.12.1",

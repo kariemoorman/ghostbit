@@ -176,7 +176,7 @@ class TestCapacityCalculation:
         assert isinstance(result, dict)
         assert result["format"] == "PNG"
         assert result["algorithm"] == "LSB"
-        assert result["capacity_bytes"] == 3750
+        assert result["capacity_bytes"] == 3717
         assert result["capacity_kb"] == pytest.approx(3.662, rel=0.01)
         assert result["capacity_mb"] == pytest.approx(0.00357, rel=0.01)
 
@@ -217,7 +217,7 @@ class TestCapacityCalculation:
         
         result = coder.calculate_capacity(str(path))
         
-        assert result["capacity_bytes"] == 375000
+        assert result["capacity_bytes"] == 374967
 
     def test_calculate_capacity_nonexistent_file(self, coder):
         """Test capacity calculation with nonexistent file"""

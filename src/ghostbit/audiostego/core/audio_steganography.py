@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import hmac
 import struct
 import hashlib
 import logging
@@ -655,7 +656,8 @@ class Coder:
         verification_plaintext = b"STEGO_VERIFY_2025"
         nonce = os.urandom(12)
         aesgcm = AESGCM(bytes(self.aes_key))
-        verification_ciphertext = aesgcm.encrypt(nonce, verification_plaintext, None)
+        key_commitment = hashlib.sha256(bytes(self.aes_key)).digest()
+        verification_ciphertext = aesgcm.encrypt(nonce, verification_plaintext, key_commitment)
         self.key_verif_block = bytearray(nonce + verification_ciphertext)
 
         logger.debug(f"Secure Argon2id key set (kdf_version={self.kdf_version})")
@@ -1043,7 +1045,7 @@ class Coder:
 
             if (
                 not self.key_verif_block
-                or bytes(self.key_verif_block) != stored_key_verif
+                or not hmac.compare_digest(bytes(self.key_verif_block), stored_key_verif)
             ):
                 logger.info(
                     f"Password required for encrypted content (KDF v{self.kdf_version})"
@@ -1079,10 +1081,11 @@ class Coder:
                 nonce = raw[:12]
                 ciphertext = raw[12:]
                 aesgcm = AESGCM(bytes(self.aes_key))
+                key_commitment = hashlib.sha256(bytes(self.aes_key)).digest()
 
                 try:
-                    plaintext = aesgcm.decrypt(nonce, ciphertext, None)
-                    if plaintext != b"STEGO_VERIFY_2025":
+                    plaintext = aesgcm.decrypt(nonce, ciphertext, key_commitment)
+                    if not hmac.compare_digest(plaintext, b"STEGO_VERIFY_2025"):
                         raise AudioSteganographyException("Invalid password")
                 except Exception:
                     logger.error("Password verification failed")

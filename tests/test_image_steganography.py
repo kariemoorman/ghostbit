@@ -318,7 +318,7 @@ class TestLSBStego:
         capacity = lsb_stego.get_capacity(test_image)
         
         # 100x100 pixels * 3 channels / 8 bits = 3750 bytes
-        assert capacity == 3750
+        assert capacity == 3717
 
     def test_get_capacity_large_image(self, lsb_stego, tmp_path):
         """Test capacity with larger image"""
@@ -327,7 +327,7 @@ class TestLSBStego:
         img.save(path)
         
         capacity = lsb_stego.get_capacity(str(path))
-        assert capacity == 375000  # 1000*1000*3/8
+        assert capacity == 374967  # 1000*1000*3/8
 
     def test_encode_small_data(self, lsb_stego, test_image):
         """Test encoding small amount of data"""
@@ -431,10 +431,6 @@ class TestLSBStego:
         with pytest.raises(ImageSteganographyException):
             lsb_stego.decode(str(invalid_file), 100)
 
-    def test_key_consistency(self, lsb_stego):
-        """Test that the key attribute is set correctly"""
-        assert hasattr(lsb_stego, 'key')
-        assert lsb_stego.key == 43
 
 
 class TestPaletteStego:

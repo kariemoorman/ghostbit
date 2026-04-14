@@ -7,6 +7,7 @@ import base64
 import random
 import secrets
 import logging
+import hashlib
 from PIL import Image
 from enum import IntEnum
 from dataclasses import dataclass
@@ -91,7 +92,8 @@ class BaseStego:
         key = self._derive_key(password, salt)
 
         aesgcm = AESGCM(key)
-        ciphertext = aesgcm.encrypt(nonce, data, None)
+        key_commitment = hashlib.sha256(key).digest()
+        ciphertext = aesgcm.encrypt(nonce, data, key_commitment)
 
         return salt, nonce, ciphertext
 
@@ -101,9 +103,10 @@ class BaseStego:
         """Decrypt data using AES-256-GCM"""
         key = self._derive_key(password, salt)
         aesgcm = AESGCM(key)
+        key_commitment = hashlib.sha256(key).digest()
 
         try:
-            plaintext = aesgcm.decrypt(nonce, ciphertext, None)
+            plaintext = aesgcm.decrypt(nonce, ciphertext, key_commitment)
             return plaintext
         except Exception:
             raise ImageSteganographyException(
@@ -304,17 +307,87 @@ class BaseStego:
 class LSBStego(BaseStego):
     """LSB steganography for lossless formats"""
 
-    def __init__(self):
-        self.key = 43
+    SEED_SIZE = 32  # 256 bits
+    SEED_PIXELS = 86  # ceil(256 / 3 channels)
 
-    def get_capacity(self, cover_path: str) -> int:
+    def _write_seed_to_pixels(self, pixels: Any, width: int, height: int, seed: bytes) -> None:
+        """Write shuffle seed into the first SEED_PIXELS pixels sequentially (LSB of RGB)."""
+        bits = []
+        for byte in seed:
+            for i in range(8):
+                bits.append((byte >> (7 - i)) & 1)
+
+        bit_idx = 0
+        for pixel_idx in range(self.SEED_PIXELS):
+            x = pixel_idx % width
+            y = pixel_idx // width
+            r, g, b, a = pixels[x, y]
+            if bit_idx < len(bits):
+                r = (r & 0xFE) | bits[bit_idx]
+                bit_idx += 1
+            if bit_idx < len(bits):
+                g = (g & 0xFE) | bits[bit_idx]
+                bit_idx += 1
+            if bit_idx < len(bits):
+                b = (b & 0xFE) | bits[bit_idx]
+                bit_idx += 1
+            pixels[x, y] = (r, g, b, a)
+
+    def _read_seed_from_pixels(self, pixels: Any, width: int, height: int) -> bytes:
+        """Read shuffle seed from the first SEED_PIXELS pixels sequentially (LSB of RGB)."""
+        bits: list[int] = []
+        total_bits = self.SEED_SIZE * 8
+
+        for pixel_idx in range(self.SEED_PIXELS):
+            x = pixel_idx % width
+            y = pixel_idx // width
+            r, g, b, a = pixels[x, y]
+            if len(bits) < total_bits:
+                bits.append(r & 1)
+            if len(bits) < total_bits:
+                bits.append(g & 1)
+            if len(bits) < total_bits:
+                bits.append(b & 1)
+
+        seed_bytes = bytearray()
+        for i in range(0, len(bits), 8):
+            byte = 0
+            for j in range(8):
+                if i + j < len(bits):
+                    byte = (byte << 1) | bits[i + j]
+            seed_bytes.append(byte)
+        return bytes(seed_bytes)
+
+    def _get_shuffled_coords(self, width: int, height: int, seed: bytes) -> list:
+        """Get deterministically shuffled coordinates, excluding seed-reserved pixels."""
+        seed_positions = set()
+        for pixel_idx in range(self.SEED_PIXELS):
+            seed_positions.add((pixel_idx % width, pixel_idx // width))
+
+        coords = [
+            (x, y) for y in range(height) for x in range(width)
+            if (x, y) not in seed_positions
+        ]
+
+        seed_int = int.from_bytes(hashlib.sha256(seed).digest(), "big")
+        rng = random.Random(seed_int)
+        rng.shuffle(coords)
+        return coords
+
+    def get_capacity(self, cover_path_or_image: Union[str, Image.Image]) -> int:
         """Calculate maximum bytes that can be hidden using LSB (RGB channels only)"""
         logger.debug("Calculating LSB capacity")
         try:
-            with Image.open(cover_path).convert("RGB") as img:
+            if isinstance(cover_path_or_image, Image.Image):
+                img = cover_path_or_image.convert("RGB")
                 width, height = img.size
                 channels = len(img.getbands())
-                return (width * height * min(channels, 3)) // 8
+                return ((width * height - self.SEED_PIXELS) * min(channels, 3)) // 8
+            else:
+                with Image.open(cover_path_or_image).convert("RGB") as img:
+                    width, height = img.size
+                    channels = len(img.getbands())
+                    return ((width * height - self.SEED_PIXELS) * min(channels, 3)) // 8
         except Exception as e:
             logger.error("Failed to calculate LSB capacity")
             raise ImageSteganographyException(f"Failed to calculate LSB capacity: {e}")
@@ -356,105 +429,119 @@ class LSBStego(BaseStego):
         except Exception as e:
             raise ImageSteganographyException(f"Failed to encode image: {e}")
 
-    def encode(self, cover_path: str, data: bytes) -> Image.Image:
-        """Embed data using random LSB"""
+    def encode(self, cover_path_or_image: Union[str, Image.Image], data: bytes) -> Image.Image:
+        """Embed data using random LSB. Accepts file path or PIL Image."""
         try:
-            logger.info(f"Opening cover image: {cover_path}")
-            with Image.open(cover_path) as image:
-                img: Image.Image = image.convert("RGBA")
-                width, height = img.size
-                pixels: Any = img.load()
-                logger.debug(f"Image size: {width}x{height}, mode: {img.mode}")
+            if isinstance(cover_path_or_image, Image.Image):
+                logger.info("Encoding from PIL Image object")
+                img: Image.Image = cover_path_or_image.convert("RGBA")
+            else:
+                logger.info(f"Opening cover image: {cover_path_or_image}")
+                img = Image.open(cover_path_or_image).convert("RGBA")
 
-                total_bits = len(data) * 8
-                logger.info(f"Embedding {len(data)} bytes ({total_bits} bits)")
+            width, height = img.size
+            pixels: Any = img.load()
+            logger.debug(f"Image size: {width}x{height}, mode: {img.mode}")
 
-                def bit_generator(data_bytes):
-                    for byte in data_bytes:
-                        for i in range(8):
-                            yield (byte >> (7 - i)) & 1
+            total_bits = len(data) * 8
+            logger.info(f"Embedding {len(data)} bytes ({total_bits} bits)")
 
-                logger.debug("Converting data to a bit generator")
-                bits = bit_generator(data)
+            def bit_generator(data_bytes):
+                for byte in data_bytes:
+                    for i in range(8):
+                        yield (byte >> (7 - i)) & 1
 
-                logger.debug("Generating shuffled coordinates")
-                coords = [(x, y) for y in range(height) for x in range(width)]
-                random.seed(self.key)
-                random.shuffle(coords)
-                logger.debug(f"Shuffled {len(coords)} pixel coordinates with key")
+            logger.debug("Converting data to a bit generator")
+            bits = bit_generator(data)
 
-                logger.debug("Embedding bits into pixels")
-                bit_count = 0
-                for idx, (x, y) in enumerate(coords):
-                    r, g, b, a = pixels[x, y]
-                    for channel_name, channel_value in zip(["R", "G", "B"], [r, g, b]):
-                        try:
-                            bit = next(bits)
-                            if channel_name == "R":
-                                r = (r & 0xFE) | bit
-                            elif channel_name == "G":
-                                g = (g & 0xFE) | bit
-                            else:  # B
-                                b = (b & 0xFE) | bit
-                            bit_count += 1
-                        except StopIteration:
-                            break
-                    pixels[x, y] = (r, g, b, a)
+            logger.debug("Generating and embedding shuffle seed")
+            seed = secrets.token_bytes(self.SEED_SIZE)
+            self._write_seed_to_pixels(pixels, width, height, seed)
 
-                    if bit_count >= total_bits:
-                        logger.debug(f"All bits embedded at pixel index {idx}")
+            logger.debug("Generating shuffled coordinates")
+            coords = self._get_shuffled_coords(width, height, seed)
+            logger.debug(f"Shuffled {len(coords)} pixel coordinates with seed")
+
+            logger.debug("Embedding bits into pixels")
+            bit_count = 0
+            for idx, (x, y) in enumerate(coords):
+                r, g, b, a = pixels[x, y]
+                for channel_name, channel_value in zip(["R", "G", "B"], [r, g, b]):
+                    try:
+                        bit = next(bits)
+                        if channel_name == "R":
+                            r = (r & 0xFE) | bit
+                        elif channel_name == "G":
+                            g = (g & 0xFE) | bit
+                        else:  # B
+                            b = (b & 0xFE) | bit
+                        bit_count += 1
+                    except StopIteration:
                         break
+                pixels[x, y] = (r, g, b, a)
 
-                logger.info(f"Finished embedding {bit_count} bits into image")
-                return img
+                if bit_count >= total_bits:
+                    logger.debug(f"All bits embedded at pixel index {idx}")
+                    break
+
+            logger.info(f"Finished embedding {bit_count} bits into image")
+            return img
 
         except Exception as e:
             logger.error(f"Failed to encode image: {e}", exc_info=True)
             raise ImageSteganographyException(f"Failed to encode image: {e}")
 
-    def decode(self, stego_image: str, data_length: int) -> bytes:
-        """Decode data hidden with random LSB embedding"""
+    def decode(self, stego_image: Union[str, Image.Image], data_length: int) -> bytes:
+        """Decode data hidden with random LSB embedding. Accepts file path or PIL Image."""
         try:
-            logger.info(f"Opening stego image: {stego_image}")
-            with Image.open(stego_image) as image:
-                img: Image.Image = image.convert("RGBA")
-                width, height = img.size
-                logger.debug(f"Image size: {width}x{height}, mode: {img.mode}")
+            if isinstance(stego_image, Image.Image):
+                logger.info("Decoding from PIL Image object")
+                img: Image.Image = stego_image.convert("RGBA")
+            else:
+                logger.info(f"Opening stego image: {stego_image}")
+                img = Image.open(stego_image).convert("RGBA")
 
-                pixels: Any = img.load()
-                total_bits = data_length * 8
-                logger.info(f"Expecting {total_bits} bits ({data_length} bytes)")
+            width, height = img.size
+            logger.debug(f"Image size: {width}x{height}, mode: {img.mode}")
 
-                coords = [(x, y) for y in range(height) for x in range(width)]
-                random.seed(self.key)
-                random.shuffle(coords)
-                logger.debug(f"Shuffled {len(coords)} pixel coordinates with key")
+            pixels: Any = img.load()
+            total_bits = data_length * 8
+            logger.info(f"Expecting {total_bits} bits ({data_length} bytes)")
 
-                bits: list[int] = []
-                for idx, (x, y) in enumerate(coords):
-                    r, g, b, a = pixels[x, y]
-                    if len(bits) < total_bits:
-                        bits.append(r & 1)
-                    if len(bits) < total_bits:
-                        bits.append(g & 1)
-                    if len(bits) < total_bits:
-                        bits.append(b & 1)
-                    if len(bits) >= total_bits:
-                        logger.debug(
-                            f"Collected all {total_bits} bits at pixel index {idx}"
-                        )
-                        break
+            seed = self._read_seed_from_pixels(pixels, width, height)
+            logger.debug("Read shuffle seed from image")
+            coords = self._get_shuffled_coords(width, height, seed)
+            logger.debug(f"Shuffled {len(coords)} pixel coordinates with seed")
 
-                data_bytes = bytearray()
-                for i in range(0, len(bits), 8):
-                    byte = 0
-                    for j in range(8):
-                        if i + j < len(bits):
-                            byte = (byte << 1) | bits[i + j]
-                    data_bytes.append(byte)
-                logger.info(f"Decoded {len(data_bytes)} bytes from image")
+            bits: list[int] = []
+            for idx, (x, y) in enumerate(coords):
+                r, g, b, a = pixels[x, y]
+                if len(bits) < total_bits:
+                    bits.append(r & 1)
+                if len(bits) < total_bits:
+                    bits.append(g & 1)
+                if len(bits) < total_bits:
+                    bits.append(b & 1)
+                if len(bits) >= total_bits:
+                    logger.debug(
+                        f"Collected all {total_bits} bits at pixel index {idx}"
+                    )
+                    break
 
-                return bytes(data_bytes)
+            data_bytes = bytearray()
+            for i in range(0, len(bits), 8):
+                byte = 0
+                for j in range(8):
+                    if i + j < len(bits):
+                        byte = (byte << 1) | bits[i + j]
+                data_bytes.append(byte)
+            logger.info(f"Decoded {len(data_bytes)} bytes from image")
+
+            return bytes(data_bytes)
+
+        except Exception as e:
+            logger.error(f"Failed to decode image: {e}", exc_info=True)
+            raise ImageSteganographyException(f"Failed to decode image: {e}")
 
         except Exception as e:
             logger.error(f"Failed to decode image: {e}", exc_info=True)

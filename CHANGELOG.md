@@ -1,7 +1,16 @@
 # Changelog
 
 ## 0.0.3
+
+### Added 
+
 - Added test image generation to GH0STB1T imagestego
+- Added MCP Server integration, with 10 tools (audio_encode, audio_decode, audio_capacity, audio_analyze, generate_audio_carrier, image_encode, image_decode, image_capacity, image_analyze, generate_image_carrier)
+
+### Fixed 
+- Random seeding for LSBStego
+- Constant time for audio and image steganography
+
 
 ## 0.0.2 - 2026-02-05
 

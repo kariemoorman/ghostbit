@@ -11,7 +11,7 @@ import hashlib
 from PIL import Image
 from enum import IntEnum
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Any
+from typing import List, Optional, Tuple, Union, Any
 from cryptography.hazmat.primitives.kdf.argon2 import Argon2id
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 

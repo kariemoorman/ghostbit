@@ -917,7 +917,7 @@ GH0STB1T is a free and open source education and research tool. If you use GH0ST
   title = {GH0STB1T: A Multi-format Steganography Toolkit for Python},
   year = {2026},
   url = {https://github.com/kariemoorman/ghostbit},
-  version = {0.0.1}
+  version = {0.0.3}
 }
 ```
 

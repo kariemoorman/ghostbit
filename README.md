@@ -617,7 +617,7 @@ pip install -e '.[mcp]'
 ```
   
 
-### LM Studio
+#### LM Studio/Cursor
 
 Option 1: Use General Command
 mcp.json
@@ -653,7 +653,7 @@ mcp.json
 <details>
 <summary><b>Example Prompts</b></summary>
 
-### Audio
+#### Audio
 
 1. Generate a carrier audio file
 
@@ -679,7 +679,7 @@ mcp.json
 
 * "Generate a 10-second 440Hz WAV carrier at /path/to/output/stego_carrier.wav, then check its capacity at all three quality modes (low, normal, high), then hide /path/to/test_document.txt in it with quality 'low' and password_file='~/.ghostbit-password' saving to /path/to/output/stego_audio.wav, then analyze the result"
 
-### Image
+#### Image
 
 1. Generate a carrier image
 
@@ -712,7 +712,7 @@ mcp.json
 
 GH0STB1T includes a Skills system designed for seamless integration with LLMs and AI assistants.
 
-### Available Skills
+#### Available Skills
 
 GH0STB1T provides specialized skill documents:
 
@@ -723,7 +723,7 @@ GH0STB1T provides specialized skill documents:
 5. [**Image Capacity**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/imagestego/skills/capacity/SKILL.md) - Capacity planning and optimization strategies
 6. [**Image Troubleshooting**](https://github.com/kariemoorman/ghostbit/blob/main/src/ghostbit/imagestego/skills/troubleshooting/SKILL.md) - Common issues and solutions
 
-### Quick Start for LLMs
+#### Quick Start for LLMs
 
 <details>
 <summary><b>Retrieve Documentation</b></summary>

@@ -537,7 +537,6 @@ Security hardening measures include:
 - Prompt injection defense including filename sanitization
 - Error sanitization, ensuring errors are translated into safe category-level messages
 - Audit logging and password scrubbing
-- STDIO transport with JSON-RPC protocol
 - Stateless tool design (fresh coder instance per call)
 - Resource exhaustion prevention, including file size limits and stateless tool calls
 
